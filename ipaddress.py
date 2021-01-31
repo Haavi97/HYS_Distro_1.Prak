@@ -1,5 +1,6 @@
 import os
 import sys
+import itertools as it
 from log_helpers import print_wl_error, print_wl
 
 dirname = 'data'
@@ -34,7 +35,7 @@ def add_ip(ip_address, file=default_path):
             with open(default_path, 'a') as fd:
                 fd.write(ip_address + '\n')
                 print_wl(
-                        'Ip address {} succesfully added'.format(ip_address))
+                    'Ip address {} succesfully added'.format(ip_address))
         except FileNotFoundError:
             create_ipa_file()
             with open(default_path, 'a') as fd:
@@ -74,4 +75,10 @@ def ip_is_in_file(ip_address, file=default_path):
         print_wl_error('Searching ipa but no file found')
 
 
-# TODO! Check ip address validity
+def valid_ipv4(ip_address):
+    numbers = ip_address.strip('\n').split('.')
+    try:
+        numbers = filter(lambda x: 0 <= int(x) < 256, numbers)
+        return len(list(numbers)) == 4
+    except ValueError:
+        return False
