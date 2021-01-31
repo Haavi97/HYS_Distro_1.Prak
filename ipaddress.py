@@ -30,35 +30,43 @@ def erase_ipa_file(file=default_path):
 
 
 def add_ip(ip_address, file=default_path):
-    if not ip_is_in_file(ip_address):
-        try:
-            with open(default_path, 'a') as fd:
-                fd.write(ip_address + '\n')
-                print_wl(
-                    'Ip address {} succesfully added'.format(ip_address))
-        except FileNotFoundError:
-            create_ipa_file()
-            with open(default_path, 'a') as fd:
-                fd.write(ip_address)
-            os.close(fd)
+    if valid_ipv4(ip_address):
+        if not ip_is_in_file(ip_address):
+            try:
+                with open(default_path, 'a') as fd:
+                    fd.write(ip_address + '\n')
+                    print_wl(
+                        'Ip address {} succesfully added'.format(ip_address))
+            except FileNotFoundError:
+                create_ipa_file()
+                with open(default_path, 'a') as fd:
+                    fd.write(ip_address)
+                os.close(fd)
+        else:
+            print_wl('Ip address already in file')
     else:
-        print_wl('Ip address already in file')
+        print_wl_error(
+            'Failed to add invalid ip address {}'.format(ip_address))
 
 
 def remove_ip(ip_address, file=default_path):
-    try:
-        with open(default_path, 'r+') as fd:
-            lines = fd.readlines()
-            fd.seek(0)
-            for line in lines:
-                if line.strip('\n') != ip_address:
-                    fd.write(line)
-                else:
-                    print_wl(
-                        'Ip address {} succesfully removed'.format(ip_address))
-            fd.truncate()
-    except FileNotFoundError:
-        print_wl_error('Trying to remove ipa but no file found')
+    if valid_ipv4(ip_address):
+        try:
+            with open(default_path, 'r+') as fd:
+                lines = fd.readlines()
+                fd.seek(0)
+                for line in lines:
+                    if line.strip('\n') != ip_address:
+                        fd.write(line)
+                    else:
+                        print_wl(
+                            'Ip address {} succesfully removed'.format(ip_address))
+                fd.truncate()
+        except FileNotFoundError:
+            print_wl_error('Trying to remove ipa but no file found')
+    else:
+        print_wl_error(
+            'Failed to remove invalid ip address {}'.format(ip_address))
 
 
 def ip_is_in_file(ip_address, file=default_path):
