@@ -31,6 +31,8 @@ def add_ip(ip_address, file=default_path):
         try:
             with open(default_path, 'a') as fd:
                 fd.write(ip_address + '\n')
+                print_wl(
+                        'Ip address {} succesfully added'.format(ip_address))
         except FileNotFoundError:
             create_ipa_file()
             with open(default_path, 'a') as fd:
@@ -48,6 +50,9 @@ def remove_ip(ip_address, file=default_path):
             for line in lines:
                 if line.strip('\n') != ip_address:
                     fd.write(line)
+                else:
+                    print_wl(
+                        'Ip address {} succesfully removed'.format(ip_address))
             fd.truncate()
     except FileNotFoundError:
         print_wl_error('Trying to remove ipa but no file found')
@@ -61,7 +66,7 @@ def ip_is_in_file(ip_address, file=default_path):
                 if ip_address == line.strip("\n"):
                     fd.close()
                     return True
-            print_wl('Ip address not found')
+            print_wl('Ip address {} not found'.format(ip_address))
         return False
     except FileNotFoundError:
         print_wl_error('Searching ipa but no file found')
