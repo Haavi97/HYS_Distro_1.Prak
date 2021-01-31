@@ -8,12 +8,14 @@ default_path = os.getcwd() + os.sep + dirname + os.sep + 'ipadresses.txt'
 
 def create_ipa_file(file=default_path):
     try:
-        if dirname not in os.listdir():
-            os.mkdir(dirname)
-        # TODO! Check first if file already exists
-        fd = open(file, 'x')
-        fd.close()
-        print_wl('Succeed creating ipa_file')
+        if os.path.exists(default_path):
+            print_wl('File already exists')
+        else:
+            if dirname not in os.listdir():
+                os.mkdir(dirname)
+            fd = open(file, 'x')
+            fd.close()
+            print_wl('Succeed creating ipa_file')
     except:
         print_wl_error('Some error ocurred trying to create ipa_file')
 
@@ -73,4 +75,3 @@ def ip_is_in_file(ip_address, file=default_path):
 
 
 # TODO! Check ip address validity
-# TODO! Add verbosity to messages

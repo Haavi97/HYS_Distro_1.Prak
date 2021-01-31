@@ -14,3 +14,4 @@ if __name__ == '__main__':
     add_ip('192.168.1.4')
     add_ip('192.168.1.1')
     ip_is_in_file('192.168.1.3')
+    create_ipa_file()
