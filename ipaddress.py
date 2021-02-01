@@ -90,3 +90,17 @@ def valid_ipv4(ip_address):
         return len(list(numbers)) == 4
     except ValueError:
         return False
+
+
+def get_ip_listdef(file=default_path):
+    try:
+        with open(default_path, "r") as fd:
+            ips = fd.read().split('\n')[:-1]
+        return ips
+    except FileNotFoundError:
+        print_wl_error('Could not get ip list from non existing file')
+
+
+def add_ip_list(ip_list):
+    for ip in ip_list:
+        add_ip(ip)

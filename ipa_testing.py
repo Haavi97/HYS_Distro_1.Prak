@@ -1,6 +1,7 @@
 from ipaddress import create_ipa_file, erase_ipa_file
 from ipaddress import add_ip, remove_ip, ip_is_in_file
 from ipaddress import valid_ipv4
+from ipaddress import get_ip_listdef, add_ip_list
 
 
 if __name__ == '__main__':
@@ -21,4 +22,6 @@ if __name__ == '__main__':
     add_ip('192.')
     add_ip('asdf')
     add_ip('192.168.a.3')
+    add_ip_list(['192.168.a.3', '192.168.3.1', '192.168.1.155','192.168.1.1222'])
+    print(get_ip_listdef())
     
