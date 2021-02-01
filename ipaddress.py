@@ -29,8 +29,8 @@ def erase_ipa_file(file=default_path):
         print_wl_error('Error trying to erase non existing file')
 
 
-def add_ip(ip_address, file=default_path):
-    if valid_ipv4(ip_address):
+def add_ip(ip_address, file=default_path, with_port=False):
+    if valid_ipv4(ip_address, with_port=with_port):
         if not ip_is_in_file(ip_address):
             try:
                 with open(default_path, 'a') as fd:
@@ -76,6 +76,7 @@ def ip_is_in_file(ip_address, file=default_path):
             for line in lines:
                 if ip_address == line.strip("\n"):
                     fd.close()
+                    print_wl('Ip address {} found.'.format(ip_address))
                     return True
             print_wl('Ip address {} not found'.format(ip_address))
         return False
@@ -83,8 +84,12 @@ def ip_is_in_file(ip_address, file=default_path):
         print_wl_error('Searching ipa but no file found')
 
 
-def valid_ipv4(ip_address):
+def valid_ipv4(ip_address, with_port=False):
     numbers = ip_address.strip('\n').split('.')
+    if with_port:
+        numbers[-1], port = numbers[-1].split(':')
+        if int(port) < 1:
+            return False
     try:
         numbers = filter(lambda x: 0 <= int(x) < 256, numbers)
         return len(list(numbers)) == 4
