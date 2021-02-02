@@ -85,12 +85,12 @@ def ip_is_in_file(ip_address, file=default_path):
 
 
 def valid_ipv4(ip_address, with_port=False):
-    numbers = ip_address.strip('\n').split('.')
-    if with_port:
-        numbers[-1], port = numbers[-1].split(':')
-        if int(port) < 1:
-            return False
     try:
+        numbers = ip_address.strip('\n').split('.')
+        if with_port:
+            numbers[-1], port = numbers[-1].split(':')
+            if int(port) < 1:
+                return False
         numbers = filter(lambda x: 0 <= int(x) < 256, numbers)
         return len(list(numbers)) == 4
     except ValueError:
