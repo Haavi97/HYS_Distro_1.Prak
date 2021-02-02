@@ -21,8 +21,8 @@ def display_menu():
     print('08. Add ip list')
     print('09. Change file name')
     print('10. Set default file name')
-    print('11. Set valid to be ipv4 with' +
-          ' port number (e.g:1.1.1.1:23)')
+    print('11. Set valid to be ipv4 without' +
+          ' port number')
     print('**. q, exit, 0\n\n')
 
 
@@ -31,7 +31,7 @@ if __name__ == '__main__':
         if sys.argv[1] == '-with-port':
             with_port = True
     fn = default_path
-    wp = False
+    wp = True
     while True:
         try:
             display_menu()
@@ -65,7 +65,7 @@ if __name__ == '__main__':
             elif inp == '10':
                 fn = default_path
             elif inp == '11':
-                wp = True
+                wp = False
             else:
                 print("Please, choose a valid number")
         except:

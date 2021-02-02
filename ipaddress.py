@@ -29,7 +29,7 @@ def erase_ipa_file(file=default_path):
         print_wl_error('Error trying to erase non existing file')
 
 
-def add_ip(ip_address, file=default_path, with_port=False):
+def add_ip(ip_address, file=default_path, with_port=True):
     if valid_ipv4(ip_address, with_port=with_port):
         if not ip_is_in_file(ip_address):
             try:
@@ -84,7 +84,7 @@ def ip_is_in_file(ip_address, file=default_path):
         print_wl_error('Searching ipa but no file found')
 
 
-def valid_ipv4(ip_address, with_port=False):
+def valid_ipv4(ip_address, with_port=True):
     try:
         numbers = ip_address.strip('\n').split('.')
         if with_port:
