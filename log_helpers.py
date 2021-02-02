@@ -1,10 +1,13 @@
 import sys
 import logging
 
+lof_fn = 'ip.log'
+
 FORMAT = '%(asctime)-15s %(name)s - %(levelname)s - %(message)s'
-logging.basicConfig(filename='app.log',
+logging.basicConfig(filename=lof_fn,
                     filemode='a',
-                    format=FORMAT)
+                    format=FORMAT,
+                    level=10)
 
 output = sys.stdout
 

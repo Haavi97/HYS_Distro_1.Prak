@@ -55,9 +55,11 @@ if __name__ == '__main__':
                 valid_ipv4(input('Input ipv4 address: '),
                            with_port=wp)
             elif inp == '7':
-                get_ip_listdef(file=fn)
+                print(get_ip_listdef(file=fn))
             elif inp == '8':
-                add_ip_list(eval(input('Type ip addresses list:')))
+                ip_in = input('Type ip addresses list:')
+                ip_eval = eval(ip_in)
+                add_ip_list(ip_eval)
             elif inp == '9':
                 fn = input('Input file name (full path): ')
             elif inp == '10':
