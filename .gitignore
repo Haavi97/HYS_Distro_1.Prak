@@ -1,0 +1,5 @@
+app.log
+ip.log
+markdoc.py
+/data
+/__pycache__
