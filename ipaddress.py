@@ -124,7 +124,7 @@ class IPHandler(object):
 
         Returns
         -------
-        bool
+        is_in : bool
             True if the ip address is in the given file.
             False otherwise
         """
@@ -155,7 +155,7 @@ class IPHandler(object):
 
         Returns
         -------
-        bool
+        valid : bool
             True if the ip address is valid (4 numbers
             separated by . between 0-255 and integer after colon
             in case of with_port being true).
@@ -177,8 +177,8 @@ class IPHandler(object):
 
         Returns
         -------
-        list
-            a list containing all ip addresses
+        ips : list
+            a list containing all ip addresses (str)
         """
         try:
             with open(self.file, "r") as fd:

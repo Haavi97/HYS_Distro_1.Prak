@@ -114,6 +114,7 @@ Looks up an ip address in the given file.
 
 | Returns    | Type             | Doc             |
 |:-------|:-----------------|:----------------|
+|         is_in | bool |             True if the ip address is in the given file.            False otherwise | 
 
 
 ### valid_ipv4
@@ -133,6 +134,7 @@ Looks up an ip address in the given file.
 
 | Returns    | Type             | Doc             |
 |:-------|:-----------------|:----------------|
+|         valid | bool |             True if the ip address is valid (4 numbers            separated by . between 0-255 and integer after colon            in case of with_port being true).            False otherwise | 
 
 
 ### get_ip_listdef
@@ -146,6 +148,7 @@ Gets the list of all the ip address in the file.
 
 | Returns    | Type             | Doc             |
 |:-------|:-----------------|:----------------|
+|         ips | list |             a list containing all ip addresses (str) | 
 
 
 ### add_ip_list
