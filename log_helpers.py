@@ -11,7 +11,7 @@ logging.basicConfig(filename=lof_fn,
 
 output = sys.stdout
 
-def print_wl(s: str) -> str:
+def print_wl(s: str):
     """
     A wrapper function that prints to the predefined output file
     and at the same time logs an info message 
@@ -24,7 +24,7 @@ def print_wl(s: str) -> str:
     logging.info(s)
 
 
-def print_wl_error(s: str) -> str:
+def print_wl_error(s: str):
     """
     A wrapper function that prints to the std.err
     and at the same time logs an error message 

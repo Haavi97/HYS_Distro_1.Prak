@@ -1,9 +1,7 @@
 import sys
 
-from ipaddress import create_ipa_file, erase_ipa_file
-from ipaddress import add_ip, remove_ip, ip_is_in_file
-from ipaddress import valid_ipv4, default_path
-from ipaddress import get_ip_listdef, add_ip_list
+from ipaddress import IPHandler
+from ipaddress import default_path
 from log_helpers import print_wl_error, print_wl
 
 
@@ -30,8 +28,10 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         if sys.argv[1] == '-with-port':
             with_port = True
-    fn = default_path
+
+    ip_handler = IPHandler()
     wp = True
+
     while True:
         try:
             display_menu()
@@ -39,31 +39,28 @@ if __name__ == '__main__':
             if inp in ['q', 'exit', '0']:
                 break
             elif inp == '1':
-                create_ipa_file(file=fn)
+                ip_handler.create_ipa_file()
             elif inp == '2':
-                erase_ipa_file(file=fn)
+                ip_handler.erase_ipa_file()
             elif inp == '3':
-                add_ip(input('Input ipv4 address: '),
-                       file=fn, with_port=wp)
+                ip_handler.add_ip(input('Input ipv4 address: '), with_port=wp)
             elif inp == '4':
-                remove_ip(input('Input ipv4 address to remove: '),
-                          file=fn)
+                ip_handler.remove_ip(input('Input ipv4 address to remove: '))
             elif inp == '5':
-                ip_is_in_file(input('Input ipv4 address: '),
-                              file=fn)
+                ip_handler.ip_is_in_file(input('Input ipv4 address: '))
             elif inp == '6':
-                valid_ipv4(input('Input ipv4 address: '),
-                           with_port=wp)
+                ip_handler.valid_ipv4(input('Input ipv4 address: '),
+                                      with_port=wp)
             elif inp == '7':
-                print(get_ip_listdef(file=fn))
+                print(ip_handler.get_ip_listdef())
             elif inp == '8':
                 ip_in = input('Type ip addresses list:')
                 ip_eval = eval(ip_in)
-                add_ip_list(ip_eval)
+                ip_handler.add_ip_list(ip_eval)
             elif inp == '9':
-                fn = input('Input file name (full path): ')
+                ip_handler.set_path(input('Input file name (full path): '))
             elif inp == '10':
-                fn = default_path
+                ip_handler.set_path(default_path)
             elif inp == '11':
                 wp = False
             else:
