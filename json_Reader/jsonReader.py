@@ -14,9 +14,3 @@ def write_json(new_data):
     current_json["data"].append(new_data)
     with open(path, 'w') as f:
         json.dump(current_json, f)
-
-
-if __name__ == '__main__':
-    print(read_json())
-    write_json({'c': '3'})
-    print(read_json())
