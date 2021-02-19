@@ -1,7 +1,8 @@
 # User script
 
+
 >Module that implements a simple server-client that can accept
-several clients... 
+several clients...
 
 # Usage
 CLI application that requires 3 parameters:
@@ -40,9 +41,11 @@ user.py 7000 5000 user3
 - [x] Server client user with multiple connections
 - [ ] Connection to several ip addresses (client)
 - [ ] Automatic connection to new ip addresses connecting to the user server (client)
+- [ ] When a client connects to a server somehow send it's server port so the server \
+can also connect to that user.
+- [ ] Automatically add the addresses of new clients.
 - [ ] Error handling
 - [ ] Implement over the internet not only locally
-
 
 
 # User 
@@ -72,8 +75,9 @@ from a txt file.
 |:-------|:----------------|
 | start_server | Starts the server listening and accept any coming connection. | 
 | accept_connection | Accepts incoming connections to the server. | 
-| listen_data | Starts to received data from the given clien. | 
-| start_client | Starts client connection to the given server ip address and por. | 
+| listen_data | Starts to received data from the given client. | 
+| start_client | Starts client connection to the given server ip address and port. | 
+| validate_msg | Validates an input message to avoid void strings. | 
  
  
 
@@ -102,12 +106,12 @@ Accepts incoming connections to the server.
 ```
 
 
-Starts to received data from the given clien.
+Starts to received data from the given client.
 
 | Parameters    | Type             | Doc             |
 |:-------|:-----------------|:----------------|
-|         conn | ______ |             connection object from server_socket.accept function | 
-|         address | ______ |             address object from server_socket.accept function | 
+|         conn | socket.socket |             connection object from server_socket.accept function | 
+|         address | (int, int) |             address object from server_socket.accept function. Tuple containing (ip address, port) | 
 
 
 ### start_client
@@ -117,9 +121,19 @@ Starts to received data from the given clien.
 ```
 
 
-Starts client connection to the given server ip address and por.
+Starts client connection to the given server ip address and port.
 
 | Parameters    | Type             | Doc             |
 |:-------|:-----------------|:----------------|
 |         ip | str |             ip address of the server | 
 |         host_port | int |             port number of the server | 
+
+
+### validate_msg
+
+``` python 
+    validate_msg() 
+```
+
+
+Validates an input message to avoid void strings.

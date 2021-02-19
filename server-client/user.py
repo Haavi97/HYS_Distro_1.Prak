@@ -40,7 +40,9 @@ user.py 7000 5000 user3
 - [x] Server client user with multiple connections
 - [ ] Connection to several ip addresses (client)
 - [ ] Automatic connection to new ip addresses connecting to the user server (client)
-- [ ] Automatic connection to new ip addresses connecting to the user server (client)
+- [ ] When a client connects to a server somehow send it's server port so the server \
+    can also connect to that user.
+- [ ] Automatically add the addresses of new clients.
 - [ ] Error handling
 - [ ] Implement over the internet not only locally
 """
@@ -103,11 +105,11 @@ class User():
 
         Parameters
         ----------
-        conn : ______
+        conn : socket.socket
             connection object from server_socket.accept function
 
-        address : ______
-            address object from server_socket.accept function
+        address : (int, int)
+            address object from server_socket.accept function. Tuple containing (ip address, port)
         """
         try:
             while True:
@@ -162,6 +164,7 @@ class User():
         client_socket.close()  # close the connection
 
     def validate_msg(self):
+        """Validates an input message to avoid void strings."""
         msg = input(" -> ")  # take input
         while msg == '':
             msg = input(" -> ")  # take input
