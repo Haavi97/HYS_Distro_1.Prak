@@ -3,4 +3,5 @@ ip.log
 markdoc.py
 oldREADME.md
 /data
-/__pycache__
+__pycache__/
+server-client/users/
