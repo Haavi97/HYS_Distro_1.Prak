@@ -54,6 +54,8 @@ import json
 from sys import argv
 from time import sleep
 
+from client import Client
+
 default_ip = '127.0.0.1'
 default_port = 5000
 
@@ -61,6 +63,7 @@ DATA_SIZE = 1024
 closing_msg = 'endconn'
 
 TIMEOUT = 5
+SLEEP_TIME = 2
 # socket.setdefaulttimeout(TIMEOUT)
 
 
@@ -82,9 +85,10 @@ class User():
         User name
     """
 
-    def __init__(self, host=default_ip, port=default_port, name=os.getlogin()):
+    def __init__(self, ip=default_ip, port=default_port, name=os.getlogin(),
+                 client_ip=default_ip, client_port=default_port):
         """Init function."""
-        self.host = host
+        self.ip = ip  # server ip address
         self.port = port
         self.name = name
         self.path = os.getcwd() + os.sep + 'users' + os.sep + name + '.json'
@@ -92,19 +96,19 @@ class User():
         self.help = '\n\n1. Send message\n' + \
             '2. Close client\n' + \
             '3. Close server\n' + \
-                '4. Print help\n\n'
+            '4. Print help\n' + \
+            '5. Close all\n\n'
         self.server = None
-        self.client = None
+        self.client = Client(client_ip, client_port)
 
         self.write_json(True)
         self.start_user()
 
     def start_server(self):
         """Starts the server listening and accept any coming connection."""
-        self.server_socket.bind((self.host, self.port))
-
+        self.server_socket.bind((self.ip, self.port))
         self.server_socket.listen()
-        self.server_socket.settimeout(5)
+        self.server_socket.settimeout(TIMEOUT)
         while self.is_open():
             self.accept_connection()
 
@@ -113,7 +117,7 @@ class User():
         try:
             conn, address = self.server_socket.accept()
             # conn.setblocking(False)
-            print('\rConnection from: {}\n->'.format(address), end='')
+            print('\rConnection from: {}\n'.format(address), end='')
             threading.Thread(target=self.listen_data,
                              args=(conn, address)).start()
         except:
@@ -151,68 +155,14 @@ class User():
         except ConnectionResetError:
             print("Most probably closed the client or something else happened")
 
-    def start_client(self, ip, host_port):
-        """Starts client connection to the given server ip address and port.
-
-        Parameters
-        ----------
-        ip : str
-            ip address of the server
-
-        host_port : int
-            port number of the server
-        """
-        client_socket = socket.socket(
-            socket.AF_INET, socket.SOCK_STREAM)  # instantiate
-        connected = False
-        while not connected:
-            try:
-                client_socket.connect((ip, host_port))  # connect to the server
-                connected = True
-            except ConnectionRefusedError:
-                connected = False
-                print("Couldn't connect to server. Retrying...")
-                sleep(2)
-
-        try:
-            self.menu()
-        except:
-            print('Some error ocurred in menu')
-        message = self.validate_msg()
-
-        while message.lower().strip() not in ['bye', 'q', '0', 'exit', 'quit', closing_msg]:
-            print('Client {} connected to {} in port {}'.format(
-                self.name, ip, host_port))
-            client_socket.send(message.encode())  # send message
-            data = client_socket.recv(DATA_SIZE).decode()  # receive response
-            if data == closing_msg:
-                break
-            print('Received from server: ' + data)  # show in terminal
-
-            message = self.validate_msg()
-
-        self.write_json(False)
-
-        client_socket.send(closing_msg.encode())  # send closing message
-        client_socket.close()  # close the connection
-
-    def validate_msg(self):
-        """Validates an input message to avoid void strings."""
-        msg = input(" -> ")
-        while msg == '':
-            msg = input(" -> ")
-        if msg == 'close server':
-            self.write_json(False)
-            msg = closing_msg
-        return msg
-
     def start_user(self):
         self.server = threading.Thread(target=self.start_server)
         self.server.start()
 
-        self.client = threading.Thread(target=self.start_client,
-                                       args=(default_ip, client_port))
-        self.client.start()
+        self.client_thread = threading.Thread(target=self.client.start_client)
+        self.client_thread.start()
+
+        self.menu()
 
     def is_open(self):
         while True:
@@ -234,23 +184,33 @@ class User():
                 pass
 
     def menu(self):
-        user_input = input(self.help)
-        if user_input == 1:
-            self.send_message()  # send message to server
-        elif user_input == 2:
-            self.close_client()
-        elif user_input == 3:
-            self.close_server()
-        elif user_input == 4:
-            print(self.help)
+        while True:
+            user_input = input(self.help)
+            if user_input == '1':
+                self.client.send_message()  # send message to server
+            elif user_input == '2':
+                self.client.close_channel()
+            elif user_input == '3':
+                self.close_server()
+            elif user_input == '4':
+                print(self.help)
+            elif user_input == '5':
+                try:
+                    self.close_server()
+                except ConnectionAbortedError:
+                    print("Already closed server")
+                try:
+                    self.client.close_channel()
+                except ConnectionAbortedError:
+                    print("Already closed server")
+                break
+            else:
+                print('Please type a valid number')
 
-    def send_message(self):
-        return 0
-
-    def close_client(self):
-        return 0
+    def close_server(self):
+        self.write_json(False)
 
 
 if __name__ == '__main__':
     server_port, client_port, name = int(argv[1]), int(argv[2]), argv[3]
-    user = User(port=server_port, name=name)
+    user = User(port=server_port, client_port=client_port, name=name)
