@@ -19,10 +19,12 @@ class Client():
         self.path = os.getcwd() + os.sep + 'users' + os.sep + name + '.json'
         self.client_socket = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM)  # instantiate
+        self.closed = False
         
     def start_client(self):
         connected = False
-        while not connected:
+        counter = 0
+        while not connected and counter < 3:
             try:
                 self.client_socket.connect((self.ip, self.port))  # connect to the server
                 connected = True
@@ -30,13 +32,24 @@ class Client():
                 connected = False
                 print("Couldn't connect to server. Retrying...")
                 sleep(SLEEP_TIME)
+                counter += 1
+        print('Stop trying connecting')
 
     def send_message(self,):
         message = self.validate_msg()
-        self.client_socket.send(message.encode())
-        data = self.client_socket.recv(DATA_SIZE).decode()  # receive response
+        try:
+            if not self.closed:
+                self.client_socket.send(message.encode())
+                data = self.client_socket.recv(DATA_SIZE).decode()  # receive response
 
-        print('Received from server: ' + data)  # show in terminal
+                print('Received from server: ' + data)  # show in terminal
+            else:
+                print('Server is already closed')
+        except ConnectionAbortedError:
+            print('Server already closed. Closing client...')
+            if not self.closed:
+                self.client_socket.close()
+                self.closed = True
 
     def validate_msg(self):
         msg = input(" -> ")  # take input
@@ -45,7 +58,8 @@ class Client():
         return msg
 
     def close_channel(self):
-        self.client_socket.send(closing_msg.encode())
-        data = self.client_socket.recv(DATA_SIZE).decode()
-        print('Received from server: ' + data)
+        if not self.closed:
+            self.client_socket.send(closing_msg.encode())
+            data = self.client_socket.recv(DATA_SIZE).decode()
+            print('Received from server: ' + data)
         self.client_socket.close()  # close the connection

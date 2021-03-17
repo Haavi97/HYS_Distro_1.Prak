@@ -48,6 +48,7 @@ user.py 7000 5000 user3
 """
 
 import os
+import sys
 import socket
 import threading
 import json
@@ -55,6 +56,8 @@ from sys import argv
 from time import sleep
 
 from client import Client
+sys.path.insert(1, os.pardir + os.sep + "ip_address")
+from ip_address import IPHandler
 
 default_ip = '127.0.0.1'
 default_port = 5000
@@ -199,10 +202,14 @@ class User():
                     self.close_server()
                 except ConnectionAbortedError:
                     print("Already closed server")
+                except:
+                    self.write_json(False)
                 try:
                     self.client.close_channel()
                 except ConnectionAbortedError:
                     print("Already closed server")
+                except:
+                    self.write_json(False)
                 break
             else:
                 print('Please type a valid number')
