@@ -10,27 +10,30 @@ DATA_SIZE = 1024
 SLEEP_TIME = 2
 closing_msg = 'endconn'
 
+
 class Client():
     def __init__(self, ip=default_ip, port=default_port, name=os.getlogin()):
         """Init function."""
-        self.ip = ip 
+        self.ip = ip
         self.port = port
         self.name = name
         self.path = os.getcwd() + os.sep + 'users' + os.sep + name + '.json'
         self.client_socket = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM)  # instantiate
         self.closed = False
-        
+
     def start_client(self):
         connected = False
         counter = 0
-        while not connected and counter < 3:
+        while not connected and counter < 10:
             try:
-                self.client_socket.connect((self.ip, self.port))  # connect to the server
+                self.client_socket.connect(
+                    (self.ip, self.port))  # connect to the server
                 connected = True
             except ConnectionRefusedError:
                 connected = False
-                print("Couldn't connect to server. Retrying...")
+                print("Couldn't connect to server in port {}. Retrying...".format(
+                    str(self.ip)+':'+self.port))
                 sleep(SLEEP_TIME)
                 counter += 1
         print('Stop trying connecting')
@@ -40,7 +43,8 @@ class Client():
         try:
             if not self.closed:
                 self.client_socket.send(message.encode())
-                data = self.client_socket.recv(DATA_SIZE).decode()  # receive response
+                data = self.client_socket.recv(
+                    DATA_SIZE).decode()  # receive response
 
                 print('Received from server: ' + data)  # show in terminal
             else:

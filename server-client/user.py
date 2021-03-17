@@ -94,7 +94,9 @@ class User():
         self.ip = ip  # server ip address
         self.port = port
         self.name = name
-        self.path = os.getcwd() + os.sep + 'users' + os.sep + name + '.json'
+        self.path = os.getcwd() + os.sep 
+        self.user_path = self.path + 'users' + os.sep + name + '.json'
+        self.ips_path = self.path  + 'users' + os.sep + name + 'ips' + '.ip'
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.help = '\n\n1. Send message\n' + \
             '2. Close client\n' + \
@@ -102,7 +104,8 @@ class User():
             '4. Print help\n' + \
             '5. Close all\n\n'
         self.server = None
-        self.client = Client(client_ip, client_port)
+        self.iphandler = IPHandler(file=self.ips_path)
+        self.clients = self.iphandler.get_ip_listdef()
 
         self.write_json(True)
         self.start_user()
@@ -161,16 +164,20 @@ class User():
     def start_user(self):
         self.server = threading.Thread(target=self.start_server)
         self.server.start()
-
-        self.client_thread = threading.Thread(target=self.client.start_client)
-        self.client_thread.start()
+        
+        self.start_clients()
 
         self.menu()
+
+    def start_clients(self):
+        for i in range(len(self.clients)):
+            self.client_thread = threading.Thread(target=self.clients[i].start_client)
+            self.client_thread.start()
 
     def is_open(self):
         while True:
             try:
-                with open(self.path) as file:
+                with open(self.user_path) as file:
                     json_data = json.load(file)
                 return json_data['open_port']
             except:
@@ -180,7 +187,7 @@ class User():
         success = False
         while not success:
             try:
-                with open(self.path, 'w') as f:
+                with open(self.user_path, 'w') as f:
                     json.dump({'open_port': value}, f)
                     success = True
             except:
