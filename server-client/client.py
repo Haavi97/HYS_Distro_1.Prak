@@ -15,7 +15,7 @@ class Client():
     def __init__(self, ip=default_ip, port=default_port, name=os.getlogin()):
         """Init function."""
         self.ip = ip
-        self.port = port
+        self.port = int(port)
         self.name = name
         self.path = os.getcwd() + os.sep + 'users' + os.sep + name + '.json'
         self.client_socket = socket.socket(
@@ -33,7 +33,7 @@ class Client():
             except ConnectionRefusedError:
                 connected = False
                 print("Couldn't connect to server in port {}. Retrying...".format(
-                    str(self.ip)+':'+self.port))
+                    str(self.ip)+':'+str(self.port)))
                 sleep(SLEEP_TIME)
                 counter += 1
         print('Stop trying connecting')
