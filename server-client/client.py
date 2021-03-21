@@ -41,8 +41,7 @@ class Client():
                 counter += 1
         print('Stop trying connecting')
 
-    def send_message(self,):
-        message = self.validate_msg()
+    def send_message(self, message):
         try:
             if not self.closed:
                 self.client_socket.send(message.encode())
@@ -66,7 +65,5 @@ class Client():
 
     def close_channel(self):
         if not self.closed:
-            self.client_socket.send(closing_msg.encode())
-            data = self.client_socket.recv(DATA_SIZE).decode()
-            print('Received from server: ' + data)
+            self.send_message(closing_msg)
         self.client_socket.close()  # close the connection

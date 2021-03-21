@@ -242,10 +242,14 @@ class User():
             self.specific_user_messaging()
         elif user_input == '2':
             print ("WIP")
+            msg = self.clients[0].validate_msg()
+            for client in self.clients:
+                client.send_message(msg)
         elif user_input == '0':
             self.menu()
         else:
             print ("Please, select a valid option")
+            self.messaging_selection()
 
     def specific_user_messaging(self):
         print ("        Select user number to message:")
@@ -259,6 +263,9 @@ class User():
         elif 0 <= user_input < len(self.clients):
             print ("            "+ str(self.clients[i]))
             self.clients[i].send_message()
+        else:
+            print("Please, type a valid option")
+            self.specific_user_messaging()
 
 if __name__ == '__main__':
     server_port, client_port, name = int(argv[1]), int(argv[2]), argv[3]
