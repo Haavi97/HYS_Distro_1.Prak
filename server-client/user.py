@@ -88,8 +88,7 @@ class User():
         User name
     """
 
-    def __init__(self, ip=default_ip, port=default_port, name=os.getlogin(),
-                 client_ip=default_ip, client_port=default_port):
+    def __init__(self, ip=default_ip, port=default_port, name=os.getlogin()):
         """Init function."""
         self.ip = ip  # server ip address
         self.port = port
@@ -268,5 +267,5 @@ class User():
             self.specific_user_messaging()
 
 if __name__ == '__main__':
-    server_port, client_port, name = int(argv[1]), int(argv[2]), argv[3]
-    user = User(port=server_port, client_port=client_port, name=name)
+    server_port, name = int(argv[1]), argv[2]
+    user = User(port=server_port, name=name)
