@@ -15,12 +15,15 @@ class Client():
     def __init__(self, ip=default_ip, port=default_port, name=os.getlogin()):
         """Init function."""
         self.ip = ip
-        self.port = port
+        self.port = int(port)
         self.name = name
         self.path = os.getcwd() + os.sep + 'users' + os.sep + name + '.json'
         self.client_socket = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM)  # instantiate
         self.closed = False
+
+    def __str__(self):
+        return 'Client ip: ' + str(self.ip) + ' port: ' + str(self.port) 
 
     def start_client(self):
         connected = False
@@ -33,13 +36,12 @@ class Client():
             except ConnectionRefusedError:
                 connected = False
                 print("Couldn't connect to server in port {}. Retrying...".format(
-                    str(self.ip)+':'+self.port))
+                    str(self.ip)+':'+str(self.port)))
                 sleep(SLEEP_TIME)
                 counter += 1
         print('Stop trying connecting')
 
-    def send_message(self,):
-        message = self.validate_msg()
+    def send_message(self, message):
         try:
             if not self.closed:
                 self.client_socket.send(message.encode())
@@ -63,7 +65,5 @@ class Client():
 
     def close_channel(self):
         if not self.closed:
-            self.client_socket.send(closing_msg.encode())
-            data = self.client_socket.recv(DATA_SIZE).decode()
-            print('Received from server: ' + data)
+            self.send_message(closing_msg)
         self.client_socket.close()  # close the connection

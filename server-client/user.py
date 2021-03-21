@@ -78,7 +78,7 @@ class User():
 
     Parameters
     ----------
-    host : int
+    host : str
         (default value = 127.0.0.1)
         Server ip address
     port : int 
@@ -94,9 +94,9 @@ class User():
         self.ip = ip  # server ip address
         self.port = port
         self.name = name
-        self.path = os.getcwd() + os.sep 
+        self.path = os.getcwd() + os.sep
         self.user_path = self.path + 'users' + os.sep + name + '.json'
-        self.ips_path = self.path  + 'users' + os.sep + name + 'ips' + '.ip'
+        self.ips_path = self.path + 'users' + os.sep + name + '.ip'
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.help = '\n\n1. Send message\n' + \
             '2. Close client\n' + \
@@ -105,7 +105,8 @@ class User():
             '5. Close all\n\n'
         self.server = None
         self.iphandler = IPHandler(file=self.ips_path)
-        self.clients = self.iphandler.get_ip_listdef()
+        self.clients_list = self.iphandler.get_ip_listdef()
+        self.clients = []
 
         self.write_json(True)
         self.start_user()
@@ -164,14 +165,18 @@ class User():
     def start_user(self):
         self.server = threading.Thread(target=self.start_server)
         self.server.start()
-        
+
         self.start_clients()
 
         self.menu()
 
     def start_clients(self):
-        for i in range(len(self.clients)):
-            self.client_thread = threading.Thread(target=self.clients[i].start_client)
+        for i in range(len(self.clients_list)):
+            current_ip, current_port = self.clients_list[i].split(':')
+            self.clients.append(
+                Client(ip=current_ip, port=int(current_port), name=self.name + 'Client' + str(i)))
+            self.client_thread = threading.Thread(
+                target=self.clients[i].start_client)
             self.client_thread.start()
 
     def is_open(self):
@@ -197,9 +202,9 @@ class User():
         while True:
             user_input = input(self.help)
             if user_input == '1':
-                self.client.send_message()  # send message to server
+                self.messaging_selection()  # send message to server
             elif user_input == '2':
-                self.client.close_channel()
+                self.close_all_clients()
             elif user_input == '3':
                 self.close_server()
             elif user_input == '4':
@@ -211,19 +216,56 @@ class User():
                     print("Already closed server")
                 except:
                     self.write_json(False)
-                try:
-                    self.client.close_channel()
-                except ConnectionAbortedError:
-                    print("Already closed server")
-                except:
-                    self.write_json(False)
+                self.close_all_clients()
                 break
             else:
                 print('Please type a valid number')
 
+    def close_all_clients(self):
+        for client in self.clients:
+            try:
+                client.close_channel()
+            except ConnectionAbortedError:
+                print("Already closed client")
+            except:
+                self.write_json(False)
+                        
     def close_server(self):
         self.write_json(False)
 
+    def messaging_selection(self):
+        print ('\n\n   1. Send message to specific user\n' + \
+            '   2. Send message to all\n' + \
+            '   0. Go back')
+        user_input = input()
+        if user_input == '1':
+            self.specific_user_messaging()
+        elif user_input == '2':
+            msg = self.clients[0].validate_msg()
+            for client in self.clients:
+                client.send_message(msg)
+        elif user_input == '0':
+            self.menu()
+        else:
+            print ("Please, select a valid option")
+            self.messaging_selection()
+
+    def specific_user_messaging(self):
+        print ("        Select user number to message:")
+        for i in range(len(self.clients)):
+            print ("        " + str(i + 1) + '. ' +  str(self.clients[i]))
+        print ("        0. Go back")
+        user_input = input()
+        user_input = int(user_input)-1
+        if user_input == -1:
+            self.messaging_selection()
+        elif 0 <= user_input < len(self.clients):
+            print ("            "+ str(self.clients[i]))
+            msg = self.clients[i].validate_msg()
+            self.clients[i].send_message(msg)
+        else:
+            print("Please, type a valid option")
+            self.specific_user_messaging()
 
 if __name__ == '__main__':
     server_port, client_port, name = int(argv[1]), int(argv[2]), argv[3]
