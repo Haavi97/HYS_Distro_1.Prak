@@ -241,7 +241,6 @@ class User():
         if user_input == '1':
             self.specific_user_messaging()
         elif user_input == '2':
-            print ("WIP")
             msg = self.clients[0].validate_msg()
             for client in self.clients:
                 client.send_message(msg)
@@ -262,7 +261,8 @@ class User():
             self.messaging_selection()
         elif 0 <= user_input < len(self.clients):
             print ("            "+ str(self.clients[i]))
-            self.clients[i].send_message()
+            msg = self.clients[i].validate_msg()
+            self.clients[i].send_message(msg)
         else:
             print("Please, type a valid option")
             self.specific_user_messaging()
