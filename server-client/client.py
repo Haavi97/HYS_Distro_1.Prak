@@ -22,6 +22,9 @@ class Client():
             socket.AF_INET, socket.SOCK_STREAM)  # instantiate
         self.closed = False
 
+    def __str__(self):
+        return 'Client ip: ' + str(self.ip) + ' port: ' + str(self.port) 
+
     def start_client(self):
         connected = False
         counter = 0
