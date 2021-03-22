@@ -26,13 +26,12 @@ class Client():
         self.client_socket = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM)  # instantiate
         self.closed = False
-        self.headers_post = """\
-            POST HTTP/1.1\r
-            Content-Type: {content_type}\r
-            Content-Length: {content_length}\r
-            Host: {host}\r
-            Connection: close\r
-            \r\n"""
+        self.headers_post = 'POST HTTP/1.1\r\n' + \
+            'Content-Type: {content_type}\r\n' + \
+            'Content-Length: {content_length}\r\n' + \
+            'Host: {host}\r\n' + \
+            'Connection: close\r\n\n' + \
+            '\r\n'
 
     def __str__(self):
         return 'Client ip: ' + str(self.ip) + ' port: ' + str(self.port) 
