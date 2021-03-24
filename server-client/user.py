@@ -88,6 +88,7 @@ from datetime import datetime
 sys.path.insert(1, os.pardir + os.sep + "ip_address")
 from client import Client
 from ip_address import IPHandler
+from request_parsing import *
 
 default_ip = '127.0.0.1'
 default_port = 5000
@@ -121,10 +122,13 @@ class User():
         self.DATA_SIZE = 1024
         self.closing_msg = 'endconn'
 
+        self.method = 'POST'
+
         self.help = '\n\n1. Send message\n' + \
             '2. Close client\n' + \
             '3. Close server\n' + \
-            '4. Close all\n\n'
+            '4. Close all\n' + \
+            '5. Set request method POST/GET\n\n'
         self.headers_ok = 'HTTP/1.1 200 OK\r\n' + \
             'Date: {time_now}\r\n' + \
             'Server: {host}\r\n' + \
@@ -226,11 +230,25 @@ class User():
                     if data == '' or data == None:
                         data = 'void data'
                     else:
+                        if is_POST(data):
+                            url = get_request_path(data)
+                            data = get_request_data(data)
+                        elif is_GET(data):
+                            url = get_request_path(data)
+                            data = get_request_data(data)
+                        else: 
+                            print('Not a valid request')
                         if data == self.closing_msg:
                             print('Stop listening to client: {}'.format(address))
                             break
+                        if url == '/getblocks':
+                            body = str(self.clients_list)
+                        elif url == '/addips':
+                            
+                            body = 'Added ip address: {}'.format(data)
+                        else:
+                            body = 'Received {} bytes properly'.format(len(data))
                         print('\rFrom connected user: {}\n->'.format(data), end='')
-                        body = 'Received {} bytes properly'.format(len(data))
                         body_bytes = body.encode('ascii')
                         header_bytes = self.headers_ok.format(
                             time_now=datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT"),
@@ -244,7 +262,6 @@ class User():
                         conn.sendall(payload)
                 except:
                     pass
-
             if not self.is_open():
                 try:
                     conn.send((self.closing_msg.encode()))
@@ -321,6 +338,8 @@ class User():
                     self.write_json(False)
                 self.close_all_clients()
                 break
+            elif user_input == '5':
+                self.request_type()
             else:
                 print('Please type a valid number')
 
@@ -336,7 +355,7 @@ class User():
         elif user_input == '2':
             msg = self.clients[0].validate_msg()
             for client in self.clients:
-                client.send_message(msg)
+                client.send_message(msg, method=self.method)
         elif user_input == '0':
             self.menu()
         else:
@@ -356,11 +375,27 @@ class User():
         elif 0 <= user_input < len(self.clients):
             print("            " + str(self.clients[user_input]))
             msg = self.clients[user_input].validate_msg()
-            self.clients[user_input].send_message(msg)
+            self.clients[user_input].send_message(msg, method=self.method)
         else:
             print("Please, type a valid option")
             self.specific_user_messaging()
 
+    def request_type(self):
+        print ('\n\n   1. Set POST as used method\n' + \
+        '   2. Set GET as used method\n' + \
+        '   0. Go back')
+        user_input = input()
+        if user_input == '1':
+            self.method = 'POST'
+            print('Current method: {}'.format(self.method))
+        elif user_input == '2':
+            self.method = 'GET'
+            print('Current method: {}'.format(self.method))
+        elif user_input == '0':
+            self.menu()
+        else:
+            print ("Something went wrong!")
+            self.request_type()
 
 if __name__ == '__main__':
     server_port, name = int(argv[1]), argv[2]

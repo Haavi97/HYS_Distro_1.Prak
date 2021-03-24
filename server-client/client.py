@@ -4,6 +4,8 @@ import requests
 from sys import argv
 from time import sleep
 
+from request_parsing import *
+
 default_ip = '127.0.0.1'
 default_port = 5000
 
@@ -16,7 +18,7 @@ class Client():
         """Init function."""
         self.ip = ip
         self.port = int(port)
-        self.url = 'http://' + ip + ':' + str(port) + '/'
+        self.url = 'http://' + ip + ':' + str(port)
         self.name = name
         self.DATA_SIZE = 1024
         self.SLEEP_TIME = 2
@@ -26,7 +28,7 @@ class Client():
         self.client_socket = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM)  # instantiate
         self.closed = False
-        self.headers_post = 'POST HTTP/1.1\r\n' + \
+        self.headers_post = 'POST {url} HTTP/1.1\r\n' + \
             'Content-Type: {content_type}\r\n' + \
             'Content-Length: {content_length}\r\n' + \
             'Host: {host}\r\n' + \
@@ -52,22 +54,15 @@ class Client():
                 counter += 1
         print('Stop trying connecting')
 
-    def send_message(self, message):
+    def send_message(self, message, path='/', method='POST'):
         try:
             if not self.closed:                              
-                # body_bytes = message.encode('ascii')
-                # header_bytes = self.headers_post.format(
-                #     content_type="application/x-www-form-urlencoded",
-                #     content_length=len(body_bytes),
-                #     host=str(self.ip) + ":" + str(self.port)
-                # ).encode('iso-8859-1')
-
-                # payload = header_bytes + body_bytes
-                data = requests.post(self.url, message)
-                # self.client_socket.send(payload)
-                # data = self.client_socket.recv(
-                #     self.DATA_SIZE).decode()  # receive response
-                print('Received from server: ' + str(data.text))  # show in terminal
+                if method == 'POST':
+                    data = requests.post(self.url + path, message)
+                    print('Received from server: ' + str(data.text))  # show in terminal
+                elif method == 'GET':
+                    data = requests.get(self.url + path, message)
+                    print('Received from server: ' + str(data.text))
             else:
                 print('Server is already closed')
         except ConnectionAbortedError:
@@ -89,3 +84,4 @@ class Client():
             except:
                 pass # meaning that the server had already closed
         self.client_socket.close()  # close the connection
+
