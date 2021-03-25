@@ -1,139 +1,80 @@
 # User script
 
+>Moodul, mis impleminteerib lihtsa server-kliendi ning mis suudab vastu võtta mitu klienti
 
->Module that implements a simple server-client that can accept
-several clients...
+Suhtlus toimub http päringute kaudu.
 
-# Usage
-CLI application that requires 3 parameters:
-1. Server port
-2. Client port
-3. User name
 
-There is no restriction for the name, but the port must not be from the reserved ones.
+# Kasutus
+CLI rakendus nõuab ainult 2 parameetrit:
+1. Serveri port
+2. Kasutaja nimi
 
-Example:
+Saab kutsuda välja inviduaalselt
+
+Näide:
 ```bash
-user.py 5000 6000 user1
+python user.py 5000 user1
 ```
 
-## Usage example in different terminal windows
+Demoks on abiks fail ini.py, mida saab välja kutsuda käsurealt:
+```bash
+ python ini.py
+```
+
+Nimele ei ole piiranguid, aga porti ei tohi olla reserveeritud.
+
+
+## Kasutamis näited erinevates terminali akendes
 
 Terminal 1:
 ```bash
-user.py 5000 6000 user1
+python user.py 5000 user1
 ```
 
 Terminal 2:
 ```bash
-user.py 6000 5000 user2
+python user.py 6000 user2
 ```
 
-With the previous 2 code lines the two users can message themselves. You can \
-add a third user but the can only send to one of the other users (servers):
+Eelmise 2 koodi readega saavad kaks kasutajat rääkida omavahel. Sa saad veel \
+lisada kolmanda kasutaja.
 
-Terminal 3 (this example connects to user 1 and listens in port 7000):
+Terminal 3:
 ```bash
-user.py 7000 5000 user3
+python user.py 7000 user3
 ```
 
-# Plan
-- [x] Server client user with multiple connections
-- [ ] Connection to several ip addresses (client)
-- [ ] Automatic connection to new ip addresses connecting to the user server (client)
-- [ ] When a client connects to a server somehow send it's server port so the server \
-can also connect to that user.
-- [ ] Automatically add the addresses of new clients.
-- [ ] Error handling
-- [ ] Implement over the internet not only locally
+## Tehtud sammud
+- [x] Server kliendi kasutaja mitme erineva ühendusega
+- [x] Ühendus mitmele ip aadresile(klient)
+- [x] Automaatne ühendamine uutesse ip aadresitesse, mis ühendavad user serverisse (client)
+- [x] Saab küsida uute klientide aadresseid
+- [x] Errorite käsitlemine
 
 
-# User 
+## GET requests:
+```ip:port/addr```
 
-``` python 
- class User() 
-```
+Teeb päringut küsides mis aktiivsed sõlmed kellega antud ip:port kasutaja on ühendatud. Kui kasutaja teeb seda päringut siis vastu saades lisab automaatselt oma nimekirja ja püüab nendega ühendust saada.
+    
+```ip:port/getblocks```
+        
+Teeb päringut küsides ip:port kasutaja kõik blockid.
 
-Documentation to User class.
+```ip:port/getblocks/H```
 
-This class handles ip address storing and retrieving them
-from a txt file.
+Teeb päringut küsides ip:port kasutaja antud hashi "H" blocki sisut.
 
-| Parameters    | Type             | Doc             |
-|:-------|:-----------------|:----------------|
-|     host | int |         (default value = 127.0.0.1)        Server ip address | 
-|     port | int  |         (default value = 5000)        Server port | 
-|     name | str |         User name | 
+## POST requests:
+```ip:port/addips```
 
+Selle päringu sisu peab olema ip addresside nimekiri eraldatud \n märkiga. Võiks olla vastus ip:port/addr GET päringule.
 
---------- 
+```ip:port/message```
 
-## Methods 
-
- 
-| method    | Doc             |
-|:-------|:----------------|
-| start_server | Starts the server listening and accept any coming connection. | 
-| accept_connection | Accepts incoming connections to the server. | 
-| listen_data | Starts to received data from the given client. | 
-| start_client | Starts client connection to the given server ip address and port. | 
-| validate_msg | Validates an input message to avoid void strings. | 
- 
- 
-
-### start_server
-
-``` python 
-    start_server() 
-```
+Selle päringu sisu on misiganes sõnum tahab saada antud sõlmele
 
 
-Starts the server listening and accept any coming connection.
-
-### accept_connection
-
-``` python 
-    accept_connection() 
-```
-
-
-Accepts incoming connections to the server.
-
-### listen_data
-
-``` python 
-    listen_data(conn, address) 
-```
-
-
-Starts to received data from the given client.
-
-| Parameters    | Type             | Doc             |
-|:-------|:-----------------|:----------------|
-|         conn | socket.socket |             connection object from server_socket.accept function | 
-|         address | (int, int) |             address object from server_socket.accept function. Tuple containing (ip address, port) | 
-
-
-### start_client
-
-``` python 
-    start_client(ip, host_port) 
-```
-
-
-Starts client connection to the given server ip address and port.
-
-| Parameters    | Type             | Doc             |
-|:-------|:-----------------|:----------------|
-|         ip | str |             ip address of the server | 
-|         host_port | int |             port number of the server | 
-
-
-### validate_msg
-
-``` python 
-    validate_msg() 
-```
-
-
-Validates an input message to avoid void strings.
+## Autorid: 
+### Fred Oja, Javier Ortín, Artur Kerb
