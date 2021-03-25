@@ -254,7 +254,6 @@ class User():
                         if data == self.closing_msg:
                             print('Stop listening to client: {}'.format(address))
                             break
-                        print(data)
                         body = self.parse_client_request(url, data)
                         print('\rFrom connected user: {}\n->'.format(data), end='')
                         body_bytes = body.encode('ascii')
@@ -317,7 +316,6 @@ class User():
             except ConnectionAbortedError:
                 print("Already closed client")
             except:
-                self.write_json(False)
                 self.write_json(False)
 
     def close_server(self):
@@ -442,9 +440,9 @@ class User():
 
     def my_blocks(self):
         bf = open(self.blocks_path,mode='r')
-        all_of_it = bf.read()
+        data = bf.read()
         bf.close()
-        return all_of_it
+        return data
 
     def get_blocks_menu(self):
         print('\n\n\t\t1. From last block and ahead\n' +
@@ -462,9 +460,12 @@ class User():
             self.get_blocks_menu()
 
     def get_blocks(self, from_last=False):
-        # Default from_last=False meaning get all blocks
-        # TODO!
-        return ''
+        # TODO: add blocks to file
+        url = '/getblocks'
+        if from_last:
+            url += '/' + self.my_blocks().split('\n')[-1]
+        for client in self.active_clients_list():
+            client.send_message('', path=url, method='GET')
 
     def get_block_data(self):
         # TODO!
@@ -472,6 +473,9 @@ class User():
 
     def get_users(self):
         # TODO!
+        url = '/addr'
+        for client in self.active_clients_list():
+            client.send_message('', path=url, method='GET')
         return ''
 
     def broadcast_users(self):

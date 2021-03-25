@@ -44,7 +44,7 @@ class Client():
 
     def start_client(self):
         counter = 0
-        while not self.connected and counter < self.MAX_TRIALS:
+        while not self.connected and counter < self.MAX_TRIALS and not self.closed:
             try:
                 self.client_socket.connect(
                     (self.ip, self.port))  # connect to the server
