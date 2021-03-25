@@ -86,10 +86,11 @@ import json
 import hashlib
 from sys import argv
 from datetime import datetime
+from time import sleep
 
 sys.path.insert(1, os.pardir + os.sep + "ip_address")
-from request_parsing import *
 from ip_address import IPHandler
+from request_parsing import *
 
 default_ip = '127.0.0.1'
 default_port = 5000
@@ -123,6 +124,7 @@ class User():
 
         self.TIMEOUT = 5
         self.DATA_SIZE = 1024
+        self.BROADCAST_DELAY = 5
         self.closing_msg = 'endconn'
 
         self.method = 'POST'
@@ -140,16 +142,19 @@ class User():
             'Connection: close\r\n' + \
             '\r\n'
 
-        self.path = os.getcwd() + os.sep  # path of the script
+        self.path = os.getcwd() + os.sep + 'users' + os.sep + \
+            self.name + os.sep  # path of the script
+        if not os.path.exists(self.path):
+            os.mkdir(self.path)
 
         # path with the json file for handling user data
-        self.user_path = self.path + 'users' + os.sep + name + '.json'
+        self.user_path = self.path + self.name + '.json'
         self.check_file_exists(self.user_path)
         # path with the ip addresses file the user tries to connect at the beginning
-        self.ips_path = self.path + 'users' + os.sep + name + '.ip'
+        self.ips_path = self.path + self.name + '.ip'
         self.check_file_exists(self.ips_path)
         # path with the blocks file the user tries to connect at the beginning
-        self.blocks_path = self.path + 'users' + os.sep + name + '.blocks'
+        self.blocks_path = self.path + self.name + '.blocks'
         self.check_file_exists(self.blocks_path)
         # socket for the server
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -179,7 +184,6 @@ class User():
         self.server.start()
 
         self.start_clients()
-
         self.menu()
 
     def start_clients(self):
@@ -194,6 +198,12 @@ class User():
                 self.client_thread = threading.Thread(
                     target=client.start_client)
                 self.client_thread.start()
+        # threading.Thread(target=self.delayed_broadcasts).start()
+
+    def delayed_broadcasts(self):
+        sleep(self.BROADCAST_DELAY)
+        self.broadcast_blocks()
+        self.broadcast_users()
 
     def start_server(self):
         """Starts the server listening and accept any coming connection.
@@ -356,6 +366,7 @@ class User():
               '\t6. Send message (/message)\n' +
               '\t7. Broadcast users (/addips)\n' +
               '\t8. Add new block\n' +
+              '\t9. Broadcast blocks (/addblocks)\n' +
               '\t0. Go back')
         user_input = input()
         if user_input == '1':
@@ -375,6 +386,8 @@ class User():
         elif user_input == '8':
             data = self.clients[0].validate_msg()
             self.add_new_block(data)
+        elif user_input == '9':
+            self.broadcast_blocks()
         elif user_input == '0':
             self.menu()
         else:
@@ -422,8 +435,8 @@ class User():
 
     def request_type(self):
         print('\n\n   1. Set POST as used method\n' +
-        '   2. Set GET as used method\n' +
-        '   0. Go back')
+              '   2. Set GET as used method\n' +
+              '   0. Go back')
         user_input = input()
         if user_input == '1':
             self.method = 'POST'
@@ -471,7 +484,7 @@ class User():
 
     def get_last_block(self):
         try:
-            with open(self.get_last_block_hash() + '.block') as lb:
+            with open(self.path + self.get_last_block_hash() + '.block') as lb:
                 return lb.read()
         except:
             print('There is no block file or no block at all')
@@ -483,8 +496,9 @@ class User():
         hash_block = h.hexdigest()
         with open(self.blocks_path, 'a+') as bf:
             bf.write(hash_block + '\n')
-        with open(hash_block + '.block', 'w+') as hb:
+        with open(self.path + hash_block + '.block', 'w+') as hb:
             hb.write(data)
+        self.broadcast_blocks()
 
     def get_blocks_menu(self):
         print('\n\n\t\t1. From last block and ahead\n' +
@@ -522,19 +536,20 @@ class User():
             user_input = int(input())
             if user_input < 1 or user_input > len(bl):
                 raise ValueError
-        except: 
+        except:
             print('Please choose a valid number')
             self.get_block_data()
         bh = bl[user_input - 1]
         try:
-            with open(bh + '.block', 'r') as bd:
+            with open(self.path + bh + '.block', 'r') as bd:
                 print(bd.read())
         except:
             url = '/getdata/' + bh
             data = []
             for client in self.active_clients_list():
-                data.append((client.send_message('', path=url, method='GET')).text)
-            with open(bh + '.block', 'w+') as bd:
+                data.append((client.send_message(
+                    '', path=url, method='GET')).text)
+            with open(self.path + bh + '.block', 'w+') as bd:
                 for d in data:
                     if d != '':
                         bd.write(d)
@@ -551,8 +566,17 @@ class User():
     def broadcast_users(self):
         to_send = self.active_clients_list_repr()
         to_send += '\n' + self.ip
-        for client in self.active_clients_list():
-            client.send_message(to_send, path='/addips', method='POST')
+        active_clients = self.active_clients_list()
+        if active_clients != []:
+            for client in active_clients:
+                client.send_message(to_send, path='/addips', method='POST')
+
+    def broadcast_blocks(self):
+        to_send = self.my_blocks()
+        active_clients = self.active_clients_list()
+        if active_clients != []:
+            for client in active_clients:
+                client.send_message(to_send, path='/addblocks', method='POST')
 
     def parse_client_request(self, url,  data):
         if url == '/getblocks':
@@ -570,13 +594,16 @@ class User():
         elif url == '/addips':
             self.parse_new_ips(data)
             body = 'Added ip address: {}'.format(data)
+        elif url == '/addblocks':
+            self.add_blocks(data)
+            body = 'Received blocks: {}'.format(data)
         elif url == '/addr':
             print('Received /addr request. Answering...')
             body = self.active_clients_list_repr()
         elif '/getdata' in url:
             block_hash = url.split('/')[-1]
             try:
-                with open(block_hash + '.block', 'r') as bd:
+                with open(self.path + block_hash + '.block', 'r') as bd:
                     body = bd.read()
             except:
                 body = ''
@@ -604,6 +631,7 @@ class User():
             new_ips = ''
             for ip in data.split('\n'):
                 if ip not in self.clients_list and ip != self.ip:
+                    self.iphandler.add_ip(ip)
                     self.clients_list.append(ip)
                     current_ip, current_port = ip.split(':')
                     self.clients.append(
@@ -618,7 +646,7 @@ class User():
         self.start_clients()
 
     def add_blocks(self, blocks):
-        my_blocks=self.my_blocks()
+        my_blocks = self.my_blocks()
         try:
             with open(self.blocks_path, 'a+') as bf:
                 for block in blocks.split('\n'):
@@ -627,6 +655,7 @@ class User():
         except:
             print('While trying to add blocks:\n{}'.format(sys.exc_info()[0]))
 
+
 if __name__ == '__main__':
-    server_port, name=int(argv[1]), argv[2]
-    user=User(port = server_port, name = name)
+    server_port, name = int(argv[1]), argv[2]
+    user = User(port=server_port, name=name)

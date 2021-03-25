@@ -23,7 +23,7 @@ class Client():
         self.DATA_SIZE = 1024
         self.SLEEP_TIME = 2
         self.MAX_TRIALS = 10
-        self.REQUEST_TIMEOUT = 1
+        self.REQUEST_TIMEOUT = 10
         self.closing_msg = 'endconn'
         self.path = os.getcwd() + os.sep + 'users' + os.sep + name + '.json'
         self.client_socket = socket.socket(

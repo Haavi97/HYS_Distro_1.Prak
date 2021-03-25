@@ -4,6 +4,7 @@ markdoc.py
 oldREADME.md
 /data
 __pycache__/
-server-client/users/
+server-client/users/*
+!server-client/users/conf.txt
 HYS.pptx
 .vscode/
