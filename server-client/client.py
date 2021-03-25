@@ -28,6 +28,7 @@ class Client():
         self.client_socket = socket.socket(
             socket.AF_INET, socket.SOCK_STREAM)  # instantiate
         self.closed = False
+        self.connected = False
         self.headers_post = 'POST {url} HTTP/1.1\r\n' + \
             'Content-Type: {content_type}\r\n' + \
             'Content-Length: {content_length}\r\n' + \
@@ -37,22 +38,24 @@ class Client():
 
     def __str__(self):
         return 'Client ip: ' + str(self.ip) + ' port: ' + str(self.port) 
+    
+    def __repr__(self):
+        return str(self.ip) + ':' + str(self.port) 
 
     def start_client(self):
-        connected = False
         counter = 0
-        while not connected and counter < self.MAX_TRIALS:
+        while not self.connected and counter < self.MAX_TRIALS:
             try:
                 self.client_socket.connect(
                     (self.ip, self.port))  # connect to the server
-                connected = True
+                self.connected = True
             except ConnectionRefusedError:
-                connected = False
-                print("Couldn't connect to server in port {}. Retrying...".format(
-                    str(self.ip)+':'+str(self.port)))
+                self.connected = False
+                # print("Couldn't connect to server in port {}. Retrying...".format(
+                #     str(self.ip)+':'+str(self.port)))
                 sleep(self.SLEEP_TIME)
                 counter += 1
-        print('Stop trying connecting')
+        # print('Stop trying connecting')
 
     def send_message(self, message, path='/', method='POST'):
         try:
@@ -65,11 +68,13 @@ class Client():
                     print('Received from server: ' + str(data.text))
             else:
                 print('Server is already closed')
+                self.connected = False
         except ConnectionAbortedError:
             print('Server already closed. Closing client...')
             if not self.closed:
                 self.client_socket.close()
                 self.closed = True
+                self.connected = False
 
     def validate_msg(self):
         msg = input(" -> ")  # take input
@@ -84,4 +89,7 @@ class Client():
             except:
                 pass # meaning that the server had already closed
         self.client_socket.close()  # close the connection
+        self.connected == False
 
+    def is_active(self):
+        return self.connected

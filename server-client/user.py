@@ -66,8 +66,8 @@ user1.ip:
 - [x] Server client user with multiple connections
 - [x] Connection to several ip addresses (client)
 - [x] Automatic connection to new ip addresses connecting to the user server (client)
-- [ ] Send all messages over HTTP
-- [ ] Parse GET and POST requests
+- [x] Send all messages over HTTP
+- [x] Parse GET and POST requests
 - [ ] When a client connects to a server somehow send it's server port so the server \
     can also connect to that user.
 - [ ] Automatically add the addresses of new clients.
@@ -78,6 +78,7 @@ user1.ip:
 
 
 import os
+import os.path
 import sys
 import socket
 import threading
@@ -118,17 +119,18 @@ class User():
         self.port = port  # server port
         self.name = name  # user name
 
+        self.ip = str(self.host) + ':' + str(self.port)
+
         self.TIMEOUT = 5
         self.DATA_SIZE = 1024
         self.closing_msg = 'endconn'
 
         self.method = 'POST'
 
-        self.help = '\n\n1. Send message\n' + \
+        self.help = '\n\n1. Actions\n' + \
             '2. Close client\n' + \
             '3. Close server\n' + \
-            '4. Close all\n' + \
-            '5. Set request method POST/GET\n\n'
+            '4. Close all\n\n'
         self.headers_ok = 'HTTP/1.1 200 OK\r\n' + \
             'Date: {time_now}\r\n' + \
             'Server: {host}\r\n' + \
@@ -142,8 +144,13 @@ class User():
 
         # path with the json file for handling user data
         self.user_path = self.path + 'users' + os.sep + name + '.json'
+        self.check_file_exists(self.user_path)
         # path with the ip addresses file the user tries to connect at the beginning
         self.ips_path = self.path + 'users' + os.sep + name + '.ip'
+        self.check_file_exists(self.ips_path)
+        # path with the blocks file the user tries to connect at the beginning
+        self.blocks_path = self.path + 'users' + os.sep + name + '.blocks'
+        self.check_file_exists(self.blocks_path)
         # socket for the server
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server = None   # Attribute that will contain the thread for the server
@@ -151,6 +158,14 @@ class User():
         self.iphandler = IPHandler(file=self.ips_path)
         self.clients_list = self.iphandler.get_ip_listdef()
         self.clients = []
+        self.last_client_index = 0
+        for i in range(len(self.clients_list)):
+            current_ip, current_port = self.clients_list[i].split(':')
+            self.clients.append(
+                Client(ip=current_ip, port=int(current_port), name=self.name + 'Client' + str(i)))
+            self.last_client_index = i
+        
+        self.last_client_index += 1
 
         self.write_json(True)
         self.start_user()
@@ -174,13 +189,11 @@ class User():
         It adds each of the client objects to a list with the possible
         clients. Then it starts each one of them in a separate thread.
         """
-        for i in range(len(self.clients_list)):
-            current_ip, current_port = self.clients_list[i].split(':')
-            self.clients.append(
-                Client(ip=current_ip, port=int(current_port), name=self.name + 'Client' + str(i)))
-            self.client_thread = threading.Thread(
-                target=self.clients[i].start_client)
-            self.client_thread.start()
+        for client in self.clients:
+            if not client.is_active():
+                self.client_thread = threading.Thread(
+                    target=client.start_client)
+                self.client_thread.start()
 
     def start_server(self):
         """Starts the server listening and accept any coming connection.
@@ -235,19 +248,14 @@ class User():
                             data = get_request_data(data)
                         elif is_GET(data):
                             url = get_request_path(data)
-                            data = get_request_data(data)
+                            data = ''
                         else: 
                             print('Not a valid request')
                         if data == self.closing_msg:
                             print('Stop listening to client: {}'.format(address))
                             break
-                        if url == '/getblocks':
-                            body = str(self.clients_list)
-                        elif url == '/addips':
-
-                            body = 'Added ip address: {}'.format(data)
-                        else:
-                            body = 'Received {} bytes properly'.format(len(data))
+                        print(data)
+                        body = self.parse_client_request(url, data)
                         print('\rFrom connected user: {}\n->'.format(data), end='')
                         body_bytes = body.encode('ascii')
                         header_bytes = self.headers_ok.format(
@@ -324,7 +332,7 @@ class User():
         while True:
             user_input = input(self.help)
             if user_input == '1':
-                self.messaging_selection()  # send message to server
+                self.actions()
             elif user_input == '2':
                 self.close_all_clients()
             elif user_input == '3':
@@ -338,17 +346,46 @@ class User():
                     self.write_json(False)
                 self.close_all_clients()
                 break
-            elif user_input == '5':
-                self.request_type()
             else:
                 print('Please type a valid number')
+    
+    def actions(self):
+        print('\n\n\t1. Print my active clients\n' +
+              '\t2. Print my blocks\n' +
+              '\t3. Ask blocks (/getblocks)\n' +
+              '\t4. Get block data (/getdata)\n' +
+              '\t5. Get users (/addr)\n' +
+              '\t6. Send message (/message)\n' +
+              '\t7. Broadcast users (/addips)\n' +
+              '\t0. Go back')
+        user_input = input()
+        if user_input == '1':
+            self.print_active_clients()
+        elif user_input == '2':
+            self.my_blocks()
+            # TODO! send previous str
+        elif user_input == '3':
+            self.get_blocks_menu()
+        elif user_input == '4':
+            self.get_block_data()
+        elif user_input == '5':
+            self.get_users()
+        elif user_input == '6':
+            self.messaging_selection()
+        elif user_input == '7':
+            self.broadcast_users()
+        elif user_input == '0':
+            self.menu()
+        else:
+            print("Please, select a valid option")
+            self.actions()
 
     def messaging_selection(self):
         """CLI menu for selecting if sending a message to all or only to a
         specific user."""
-        print('\n\n   1. Send message to specific user\n' +
-              '   2. Send message to all\n' +
-              '   0. Go back')
+        print('\n\n\t\t1. Send message to specific user\n' +
+              '\t\t2. Send message to all\n' +
+              '\t\t0. Go back')
         user_input = input()
         if user_input == '1':
             self.specific_user_messaging()
@@ -362,10 +399,9 @@ class User():
 
     def specific_user_messaging(self):
         """CLI menu for sending a message to a specific user."""
-        print("        Select user number to message:")
-        for i in range(len(self.clients)):
-            print("        " + str(i + 1) + '. ' + str(self.clients[i]))
-        print("        0. Go back")
+        print("\t\t\tSelect user number to message:")
+        self.print_active_clients()
+        print("\t\t\t0. Go back")
         user_input = input()
         user_input = int(user_input)-1
         if user_input == -1:
@@ -399,6 +435,89 @@ class User():
         msg = self.clients[0].validate_msg()
         for client in self.clients:
             client.send_message(msg, method=self.method)
+
+    def print_active_clients(self):
+        for i in range(len(self.clients)):
+            print("\t\t\t" + str(i + 1) + '. ' + str(self.clients[i]))
+
+    def my_blocks(self):
+        bf = open(self.blocks_path,mode='r')
+        all_of_it = bf.read()
+        bf.close()
+        return all_of_it
+
+    def get_blocks_menu(self):
+        print('\n\n\t\t1. From last block and ahead\n' +
+              '\t\t2. Get all\n' +
+              '\t\t0. Go back')
+        user_input = input()
+        if user_input == '1':
+            self.get_blocks(from_last=True)
+        elif user_input == '2':
+            self.get_blocks()
+        elif user_input == '0':
+            self.actions()
+        else:
+            print("Please, select a valid option")
+            self.get_blocks_menu()
+
+    def get_blocks(self, from_last=False):
+        # Default from_last=False meaning get all blocks
+        # TODO!
+        return ''
+
+    def get_block_data(self):
+        # TODO!
+        return ''
+
+    def get_users(self):
+        # TODO!
+        return ''
+
+    def broadcast_users(self):
+        to_send = self.active_clients_list_repr()
+        to_send += '\n' + self.ip 
+        for client in self.active_clients_list():
+            client.send_message(to_send, path='/addips', method='POST')
+
+    def parse_client_request(self, url,  data):
+        if url == '/getblocks':
+            body = self.my_blocks()
+        elif url == '/addips':
+            self.parse_new_ips(data)
+            body = 'Added ip address: {}'.format(data)
+        elif url == '/addr':
+            body = self.active_clients_list_repr()
+        else:
+            body = 'Received {} bytes properly'.format(len(data))
+        return body
+
+    def active_clients_list(self):
+        result = []
+        for client in self.clients:
+            if client.is_active():
+                result.append(client)
+        return result
+
+    def active_clients_list_repr(self):
+        return '\n'.join(list(map(lambda x: repr(x), self.active_clients_list())))
+
+    def check_file_exists(self, path):
+        if not os.path.exists(path):
+            open(path, 'a').close()
+
+    def parse_new_ips(self, data):
+        try:
+            for ip in data.split('\n'):
+                if ip not in self.clients_list and ip != self.ip:
+                    self.clients_list.append(ip)
+                    current_ip, current_port = ip.split(':')
+                    self.clients.append(
+                        Client(ip=current_ip, port=int(current_port), name=self.name + 'Client' + str(self.last_client_index)))
+                    self.last_client_index += 1
+        except:
+            print(sys.exc_info()[0])
+        self.start_clients()
 
 if __name__ == '__main__':
     server_port, name = int(argv[1]), argv[2]
