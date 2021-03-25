@@ -23,6 +23,7 @@ class Client():
         self.DATA_SIZE = 1024
         self.SLEEP_TIME = 2
         self.MAX_TRIALS = 10
+        self.REQUEST_TIMEOUT = 1
         self.closing_msg = 'endconn'
         self.path = os.getcwd() + os.sep + 'users' + os.sep + name + '.json'
         self.client_socket = socket.socket(
@@ -61,11 +62,13 @@ class Client():
         try:
             if not self.closed:                              
                 if method == 'POST':
-                    data = requests.post(self.url + path, message)
-                    print('Received from server: ' + str(data.text))  # show in terminal
+                    data = requests.post(self.url + path, message, timeout=self.REQUEST_TIMEOUT)
+                    # print('Received from server: ' + str(data.text))  # show in terminal
+                    return data
                 elif method == 'GET':
-                    data = requests.get(self.url + path + message)
-                    print('Received from server: ' + str(data.text))
+                    data = requests.get(self.url + path + message, timeout=self.REQUEST_TIMEOUT)
+                    # print('Received from server: ' + str(data.text))
+                    return data
             else:
                 print('Server is already closed')
                 self.connected = False
@@ -75,6 +78,8 @@ class Client():
                 self.client_socket.close()
                 self.closed = True
                 self.connected = False
+        except requests.exceptions.ReadTimeout:
+            print('The request has timeout')
 
     def validate_msg(self):
         msg = input(" -> ")  # take input

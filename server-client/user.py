@@ -24,7 +24,7 @@ Example of usage in CLI:
 user.py 5000 user1
 ```
 
-## Usage example in different terminal windows
+# Usage example in different terminal windows
 
 Terminal 1:
 ```bash
@@ -76,20 +76,20 @@ user1.ip:
 """
 
 
-
+from client import Client
 import os
 import os.path
 import sys
 import socket
 import threading
 import json
+import hashlib
 from sys import argv
 from datetime import datetime
 
 sys.path.insert(1, os.pardir + os.sep + "ip_address")
-from client import Client
-from ip_address import IPHandler
 from request_parsing import *
+from ip_address import IPHandler
 
 default_ip = '127.0.0.1'
 default_port = 5000
@@ -106,7 +106,7 @@ class User():
     host : str
         (default value = 127.0.0.1)
         Server ip address
-    port : int 
+    port : int
         (default value = 5000)
         Server port
     name : str
@@ -164,7 +164,7 @@ class User():
             self.clients.append(
                 Client(ip=current_ip, port=int(current_port), name=self.name + 'Client' + str(i)))
             self.last_client_index = i
-        
+
         self.last_client_index += 1
 
         self.write_json(True)
@@ -249,13 +249,13 @@ class User():
                         elif is_GET(data):
                             url = get_request_path(data)
                             data = ''
-                        else: 
+                        else:
                             print('Not a valid request')
                         if data == self.closing_msg:
                             print('Stop listening to client: {}'.format(address))
                             break
                         body = self.parse_client_request(url, data)
-                        print('\rFrom connected user: {}\n->'.format(data), end='')
+                        # print('\rFrom connected user: {}\n->'.format(data), end='')
                         body_bytes = body.encode('ascii')
                         header_bytes = self.headers_ok.format(
                             time_now=datetime.now().strftime("%a, %d %b %Y %H:%M:%S GMT"),
@@ -346,7 +346,7 @@ class User():
                 break
             else:
                 print('Please type a valid number')
-    
+
     def actions(self):
         print('\n\n\t1. Print my active clients\n' +
               '\t2. Print my blocks\n' +
@@ -355,13 +355,13 @@ class User():
               '\t5. Get users (/addr)\n' +
               '\t6. Send message (/message)\n' +
               '\t7. Broadcast users (/addips)\n' +
+              '\t8. Add new block\n' +
               '\t0. Go back')
         user_input = input()
         if user_input == '1':
             self.print_active_clients()
         elif user_input == '2':
-            self.my_blocks()
-            # TODO! send previous str
+            print(self.my_blocks())
         elif user_input == '3':
             self.get_blocks_menu()
         elif user_input == '4':
@@ -372,6 +372,9 @@ class User():
             self.messaging_selection()
         elif user_input == '7':
             self.broadcast_users()
+        elif user_input == '8':
+            data = self.clients[0].validate_msg()
+            self.add_new_block(data)
         elif user_input == '0':
             self.menu()
         else:
@@ -398,7 +401,7 @@ class User():
     def specific_user_messaging(self):
         """CLI menu for sending a message to a specific user."""
         print("\t\t\tSelect user number to message:")
-        self.print_active_clients()
+        self.print_active_clients(self.active_clients_list())
         print("\t\t\t0. Go back")
         user_input = input()
         user_input = int(user_input)-1
@@ -407,14 +410,19 @@ class User():
         elif 0 <= user_input < len(self.clients):
             print("            " + str(self.clients[user_input]))
             msg = self.clients[user_input].validate_msg()
-            self.clients[user_input].send_message(msg, method=self.method)
+            data = self.clients[user_input].send_message(
+                msg, method=self.method)
+            if data.ok:
+                print('Properly sent.')
+            else:
+                print('Didn\'t get ok reponse from server')
         else:
             print("Please, type a valid option")
             self.specific_user_messaging()
 
     def request_type(self):
-        print ('\n\n   1. Set POST as used method\n' + \
-        '   2. Set GET as used method\n' + \
+        print('\n\n   1. Set POST as used method\n' +
+        '   2. Set GET as used method\n' +
         '   0. Go back')
         user_input = input()
         if user_input == '1':
@@ -426,23 +434,57 @@ class User():
         elif user_input == '0':
             self.menu()
         else:
-            print ("Something went wrong!")
+            print("Something went wrong!")
             self.request_type()
 
     def send_to_all(self):
         msg = self.clients[0].validate_msg()
+        counter = 0
         for client in self.clients:
-            client.send_message(msg, method=self.method)
+            data = client.send_message(msg, method=self.method)
+            if data.ok:
+                counter += 1
+        print('Message succesfully send to {} servers'.format(counter))
 
     def print_active_clients(self):
-        for i in range(len(self.clients)):
-            print("\t\t\t" + str(i + 1) + '. ' + str(self.clients[i]))
+        self.pritn_list_3d_level(self.active_clients_list())
+
+    def pritn_list_3d_level(self, l):
+        for i in range(len(l)):
+            print("\t\t\t" + str(i + 1) + '. ' + str(l[i]))
 
     def my_blocks(self):
-        bf = open(self.blocks_path,mode='r')
+        bf = open(self.blocks_path, mode='r')
         data = bf.read()
         bf.close()
         return data
+
+    def my_blocks_list(self):
+        return self.my_blocks().split('\n')
+
+    def get_last_block_hash(self):
+        blocks = self.my_blocks()
+        if blocks != '':
+            return self.my_blocks_list()[-1]
+        else:
+            return ''
+
+    def get_last_block(self):
+        try:
+            with open(self.get_last_block_hash() + '.block') as lb:
+                return lb.read()
+        except:
+            print('There is no block file or no block at all')
+            return ''
+
+    def add_new_block(self, data):
+        h = hashlib.sha256()
+        h.update((self.get_last_block() + data).encode('utf-8'))
+        hash_block = h.hexdigest()
+        with open(self.blocks_path, 'a+') as bf:
+            bf.write(hash_block + '\n')
+        with open(hash_block + '.block', 'w+') as hb:
+            hb.write(data)
 
     def get_blocks_menu(self):
         print('\n\n\t\t1. From last block and ahead\n' +
@@ -460,39 +502,86 @@ class User():
             self.get_blocks_menu()
 
     def get_blocks(self, from_last=False):
-        # TODO: add blocks to file
         url = '/getblocks'
         if from_last:
-            url += '/' + self.my_blocks().split('\n')[-1]
+            last_block = self.get_last_block_hash()
+            if last_block != '':
+                url += '/' + last_block
+        total_blocks = ''
         for client in self.active_clients_list():
-            client.send_message('', path=url, method='GET')
+            data = client.send_message('', path=url, method='GET')
+            self.add_blocks(data.text)
+            total_blocks += data.text
+        print('All blocks received:\n{}'.format(total_blocks))
 
     def get_block_data(self):
-        # TODO!
-        return ''
+        print('Select block to get data:')
+        bl = self.my_blocks_list()
+        self.pritn_list_3d_level(bl)
+        try:
+            user_input = int(input())
+            if user_input < 1 or user_input > len(bl):
+                raise ValueError
+        except: 
+            print('Please choose a valid number')
+            self.get_block_data()
+        bh = bl[user_input - 1]
+        try:
+            with open(bh + '.block', 'r') as bd:
+                print(bd.read())
+        except:
+            url = '/getdata/' + bh
+            data = []
+            for client in self.active_clients_list():
+                data.append((client.send_message('', path=url, method='GET')).text)
+            with open(bh + '.block', 'w+') as bd:
+                for d in data:
+                    if d != '':
+                        bd.write(d)
+                        print(d)
+                        # We assume all are the same so once we get data that's it
+                        break
 
     def get_users(self):
-        # TODO!
         url = '/addr'
         for client in self.active_clients_list():
-            client.send_message('', path=url, method='GET')
-        return ''
+            self.parse_new_ips(
+                (client.send_message('', path=url, method='GET')).text)
 
     def broadcast_users(self):
         to_send = self.active_clients_list_repr()
-        to_send += '\n' + self.ip 
+        to_send += '\n' + self.ip
         for client in self.active_clients_list():
             client.send_message(to_send, path='/addips', method='POST')
 
     def parse_client_request(self, url,  data):
         if url == '/getblocks':
+            print('Received /getblocks request. Answering...')
             body = self.my_blocks()
+        elif '/getblocks' in url:
+            block_hash = url.split('/')[1]
+            blocks = self.my_blocks()
+            if block_hash in blocks:
+                try:
+                    body = blocks[blocks.split('\n').index(block_hash):]
+                except:
+                    body = ''
+            print('Received /getblocks request. Answering...')
         elif url == '/addips':
             self.parse_new_ips(data)
             body = 'Added ip address: {}'.format(data)
         elif url == '/addr':
+            print('Received /addr request. Answering...')
             body = self.active_clients_list_repr()
+        elif '/getdata' in url:
+            block_hash = url.split('/')[-1]
+            try:
+                with open(block_hash + '.block', 'r') as bd:
+                    body = bd.read()
+            except:
+                body = ''
         else:
+            print('\rFrom connected user: {}\n->'.format(data), end='')
             body = 'Received {} bytes properly'.format(len(data))
         return body
 
@@ -512,6 +601,7 @@ class User():
 
     def parse_new_ips(self, data):
         try:
+            new_ips = ''
             for ip in data.split('\n'):
                 if ip not in self.clients_list and ip != self.ip:
                     self.clients_list.append(ip)
@@ -519,10 +609,24 @@ class User():
                     self.clients.append(
                         Client(ip=current_ip, port=int(current_port), name=self.name + 'Client' + str(self.last_client_index)))
                     self.last_client_index += 1
+                    new_ips += '{}\t'.format(ip)
+            if new_ips != '':
+                print('New added: \n')
+                print(new_ips)
         except:
             print(sys.exc_info()[0])
         self.start_clients()
 
+    def add_blocks(self, blocks):
+        my_blocks=self.my_blocks()
+        try:
+            with open(self.blocks_path, 'a+') as bf:
+                for block in blocks.split('\n'):
+                    if block not in my_blocks:
+                        bf.write(block + '\n')
+        except:
+            print('While trying to add blocks:\n{}'.format(sys.exc_info()[0]))
+
 if __name__ == '__main__':
-    server_port, name = int(argv[1]), argv[2]
-    user = User(port=server_port, name=name)
+    server_port, name=int(argv[1]), argv[2]
+    user=User(port = server_port, name = name)
