@@ -244,7 +244,7 @@ class User():
                         if url == '/getblocks':
                             body = str(self.clients_list)
                         elif url == '/addips':
-                            
+
                             body = 'Added ip address: {}'.format(data)
                         else:
                             body = 'Received {} bytes properly'.format(len(data))
@@ -353,9 +353,7 @@ class User():
         if user_input == '1':
             self.specific_user_messaging()
         elif user_input == '2':
-            msg = self.clients[0].validate_msg()
-            for client in self.clients:
-                client.send_message(msg, method=self.method)
+            self.send_to_all()
         elif user_input == '0':
             self.menu()
         else:
@@ -396,6 +394,11 @@ class User():
         else:
             print ("Something went wrong!")
             self.request_type()
+
+    def send_to_all(self):
+        msg = self.clients[0].validate_msg()
+        for client in self.clients:
+            client.send_message(msg, method=self.method)
 
 if __name__ == '__main__':
     server_port, name = int(argv[1]), argv[2]

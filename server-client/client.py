@@ -61,7 +61,7 @@ class Client():
                     data = requests.post(self.url + path, message)
                     print('Received from server: ' + str(data.text))  # show in terminal
                 elif method == 'GET':
-                    data = requests.get(self.url + path, message)
+                    data = requests.get(self.url + path + message)
                     print('Received from server: ' + str(data.text))
             else:
                 print('Server is already closed')
