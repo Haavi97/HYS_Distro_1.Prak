@@ -10,6 +10,8 @@ CLI rakendus nõuab ainult 2 parameetrit:
 1. Serveri port
 2. Kasutaja nimi
 
+Ükskord rakendus on käivitatud CLI's näitab menüü, millega saab valida erinevaid tegusid mille teostada.
+
 Saab kutsuda välja inviduaalselt
 
 Näide:
@@ -64,12 +66,21 @@ Teeb päringut küsides ip:port kasutaja kõik blockid.
 
 ```ip:port/getblocks/H```
 
+Teeb päringut küsides ip:port kasutaja alates antud hashi "H".
+
+```ip:port/getdata/H```
+        
 Teeb päringut küsides ip:port kasutaja antud hashi "H" blocki sisut.
+
 
 ## POST requests:
 ```ip:port/addips```
 
 Selle päringu sisu peab olema ip addresside nimekiri eraldatud \n märkiga. Võiks olla vastus ip:port/addr GET päringule.
+
+```ip:port/addblocks```
+
+Selle päringu sisu peab olema blockide hashide nimekiri eraldatud \n märkiga. Võiks olla vastus ip:port/getblocks GET päringule.
 
 ```ip:port/message```
 

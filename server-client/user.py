@@ -76,7 +76,7 @@ user1.ip:
 """
 
 
-from client import Client
+
 import os
 import os.path
 import sys
@@ -89,6 +89,7 @@ from datetime import datetime
 from time import sleep
 
 sys.path.insert(1, os.pardir + os.sep + "ip_address")
+from client import Client
 from ip_address import IPHandler
 from request_parsing import *
 
@@ -122,9 +123,9 @@ class User():
 
         self.ip = str(self.host) + ':' + str(self.port)
 
-        self.TIMEOUT = 5
+        self.TIMEOUT = 1
         self.DATA_SIZE = 1024
-        self.BROADCAST_DELAY = 5
+        self.BROADCAST_DELAY = 2
         self.closing_msg = 'endconn'
 
         self.method = 'POST'
@@ -641,10 +642,11 @@ class User():
             if new_ips != '':
                 print('New added: \n')
                 print(new_ips)
+                self.start_clients()
+                threading.Thread(target=self.delayed_broadcasts).start()
         except:
             print(sys.exc_info()[0])
-        self.start_clients()
-
+        
     def add_blocks(self, blocks):
         my_blocks = self.my_blocks()
         try:
