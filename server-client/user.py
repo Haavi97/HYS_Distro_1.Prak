@@ -184,6 +184,7 @@ class User():
         self.server.start()
 
         self.start_clients()
+        threading.Thread(target=self.delayed_broadcasts).start()
         self.menu()
 
     def start_clients(self):
@@ -198,7 +199,6 @@ class User():
                 self.client_thread = threading.Thread(
                     target=client.start_client)
                 self.client_thread.start()
-        # threading.Thread(target=self.delayed_broadcasts).start()
 
     def delayed_broadcasts(self):
         sleep(self.BROADCAST_DELAY)
@@ -473,7 +473,7 @@ class User():
         return data
 
     def my_blocks_list(self):
-        return self.my_blocks().split('\n')
+        return self.my_blocks().split('\n')[:-1]
 
     def get_last_block_hash(self):
         blocks = self.my_blocks()
