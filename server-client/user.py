@@ -128,6 +128,9 @@ class User():
         self.BROADCAST_DELAY = 2
         self.closing_msg = 'endconn'
 
+        self.client_counter = 0
+        self.CLIENT_TIMEOUT = 2
+
         self.method = 'POST'
 
         self.help = '\n\n1. Actions\n' + \
@@ -248,7 +251,11 @@ class User():
         """
         try:
             conn.settimeout(self.TIMEOUT)
-            while self.is_open():
+            self.client_counter += 1
+            # print(self.client_counter)
+            now = datetime.now()
+            current = datetime.now()
+            while self.is_open() and (current - now).seconds < self.CLIENT_TIMEOUT:
                 try:
                     data = conn.recv(self.DATA_SIZE).decode()
                     if data == '' or data == None:
@@ -280,12 +287,15 @@ class User():
                         conn.sendall(payload)
                 except:
                     pass
+                current = datetime.now()
             if not self.is_open():
                 try:
                     conn.send((self.closing_msg.encode()))
                 except:
                     pass  # client already closed
             conn.close()  # close the connection
+            self.client_counter -= 1
+            # print(self.client_counter)
 
         except ConnectionResetError:
             print("Most probably closed the client or something else happened")
