@@ -9,10 +9,6 @@ from request_parsing import *
 default_ip = '127.0.0.1'
 default_port = 5000
 
-
-
-
-
 class Client():
     def __init__(self, ip=default_ip, port=default_port, name=os.getlogin()):
         """Init function."""
