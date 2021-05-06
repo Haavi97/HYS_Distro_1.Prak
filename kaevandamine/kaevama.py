@@ -1,8 +1,13 @@
 from time import sleep, time
 from hashlib import sha256
 
+
 def sha256_str(tekst):
+    '''Muudab hashi hex digest'iks nii, et saaks seda lugeda. 
+
+    Ja kasutada tekstina järgmise hashimiseks.'''
     return sha256(tekst.encode('utf-8')).hexdigest()
+
 
 def kaeva_naivselt(transaktsioon, hash, n=4, t=5):
     '''
@@ -12,30 +17,36 @@ def kaeva_naivselt(transaktsioon, hash, n=4, t=5):
     transaktsioon : string
         transaktsiooni sisu
     n : int
-        nonce suurus
+        mitu nullidega peab hash alustama.
+        Default on 4. 7 juba võtab kaua aega
     t : int
         minimum sekundit mis kaevandamine peaks võtma
     '''
+    # MAX nonce igaks juhuks, kuigi see võtaks mitu tundi
     MAX_NONCE = 10**100
+
     prefiks_nullid = '0'*n
     algus = time()
     hetkel = time()
-    praegune  = ''
-    nonce = 0
+    praegune = ''
+    nonce = -1
     while not praegune.startswith(prefiks_nullid) and nonce < MAX_NONCE:
-        praegune = sha256_str(transaktsioon + hash + str(nonce))
         nonce += 1
+        praegune = sha256_str(transaktsioon + hash + str(nonce))
         hetkel = time()
     try:
+        # Praksi kirjelduses on mõni minimum aeg mis vähemalt peab kaevandama
+        # Nii et see ootab kui on varem kaevandamist lõpetanud
         sleep(t - (hetkel - algus))
     except ValueError:
         # See tähendab, et antud aeg on juba mööda läinud
         pass
     print('Kaevandamine aeg: {:.2f} s'.format(time() - algus))
     print('Tegelik kaevandamine aeg: {:.2f} s'.format(hetkel - algus))
-    print('Nonce: {}'.format(nonce-1))
+    print('Nonce: {}'.format(nonce))
     print('Hash: {}'.format(praegune))
     return hash
+
 
 if __name__ == '__main__':
     l2pp = False
