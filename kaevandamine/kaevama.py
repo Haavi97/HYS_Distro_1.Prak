@@ -33,7 +33,7 @@ def kaeva_naivselt(transaktsioon, hash, n=4, t=5):
         pass
     print('Kaevandamine aeg: {:.2f} s'.format(time() - algus))
     print('Tegelik kaevandamine aeg: {:.2f} s'.format(hetkel - algus))
-    print('Nonce: {}'.format(nonce))
+    print('Nonce: {}'.format(nonce-1))
     print('Hash: {}'.format(praegune))
     return hash
 
