@@ -5,6 +5,13 @@ from hashlib import sha256
 import json
 import time
 
+#curl  http://127.0.0.1:5000/chain
+
+
+
+
+
+
 class Block:
     def __init__(self, index, transactions, timestamp, previous_hash, nonce=0):
         self.index = index
@@ -16,6 +23,18 @@ class Block:
     def compute_hash(self):
         block_string = json.dumps(self.__dict__, sort_keys=True)
         return sha256(block_string.encode()).hexdigest()
+
+
+
+
+
+
+
+
+
+
+
+
 
 class Blockchain: 
     def __init__(self):
@@ -80,13 +99,31 @@ class Blockchain:
 app =  Flask(__name__)
 
 blockchain = Blockchain()
+
+#blockchain.add_new_transaction("Bethany bought 5 eur")
+
+#blockchain.mine()
+
+
+
+
+
+@app.route('/chain', methods=['GET'])
 def get_chain():
     chain_data = []
     for block in blockchain.chain:
         chain_data.append(block.__dict__)
     return json.dumps({"length": len(chain_data),
                        "chain": chain_data})
+app.run(debug=True, port=5000)
 
+
+@app.route('/add', methods=['GET'])
+def add():
+    transaction="String"
+    blockchain.add_new_transaction(transaction)
+    return ("Transaction added")
+    
 
 
 def GetChainLength():
