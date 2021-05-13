@@ -84,6 +84,7 @@ import socket
 import threading
 import json
 import hashlib
+import traceback
 from sys import argv
 from datetime import datetime
 from time import sleep
@@ -160,6 +161,12 @@ class User():
         # path with the blocks file the user tries to connect at the beginning
         self.blocks_path = self.path + self.name + '.blocks'
         self.check_file_exists(self.blocks_path)
+        # path with the unconfirmed transactions
+        self.transactions_path = self.path + 'transactions' + '.json'
+        if not self.check_file_exists(self.transactions_path):
+            with open(self.transactions_path, 'w') as tr_f:
+                tr_f.write('[]')
+                tr_f.close()
         # socket for the server
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server = None   # Attribute that will contain the thread for the server
@@ -611,6 +618,9 @@ class User():
         elif url == '/addr':
             print('Received /addr request. Answering...')
             body = self.active_clients_list_repr()
+        elif url == '/transaction':
+            self.add_new_transaction(data)
+            body = 'Added transaction: {}'.format(data)
         elif '/getdata' in url:
             block_hash = url.split('/')[-1]
             try:
@@ -636,6 +646,8 @@ class User():
     def check_file_exists(self, path):
         if not os.path.exists(path):
             open(path, 'a').close()
+            return False
+        return True
 
     def parse_new_ips(self, data):
         try:
@@ -667,6 +679,25 @@ class User():
         except:
             print('While trying to add blocks:\n{}'.format(sys.exc_info()[0]))
 
+    def add_new_transaction(self, new_t):
+        try:
+            new_t = json.loads(new_t)
+            with open(self.transactions_path, 'r') as tr_f:
+                transactions = json.load(tr_f)
+                found = False
+                for e in transactions:
+                    if e == new_t:
+                        tr_f.close()
+                        return False
+                transactions.append(new_t)
+                tr_f.close()
+            with open(self.transactions_path, 'w') as tr_f:
+                to_write = json.dumps(transactions)
+                tr_f.write(to_write)
+                tr_f.close()
+        except:
+            traceback.print_exc()
+            print('Some error happened while adding a transaction')
 
 if __name__ == '__main__':
     server_port, name = int(argv[1]), argv[2]
