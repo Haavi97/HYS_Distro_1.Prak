@@ -4,9 +4,10 @@ from ecdsa import SigningKey, VerifyingKey, BadSignatureError
 
 class DigitalSignature:
   def __init__(self):
-    self.userpath = '../server-client/users'
+    self.userpath = '..' + os.sep + 'server-client' + os.sep + 'users'
 
   def create_key(self, name):
+    print(self.userpath + os.sep + name + os.sep + "sk.pem")
     sk = SigningKey.generate()
     vk = sk.verifying_key
     with open(self.userpath + os.sep + name + os.sep + "sk.pem", "wb") as f:
@@ -43,6 +44,7 @@ class DigitalSignature:
 
 if __name__ == '__main__':
   digi = DigitalSignature()
+  digi.create_key('user1')
   print(digi.key_to_string(digi.get_public_key('user1')))
   message = b"message"
   signature = digi.create_signature(message, 'user1')
