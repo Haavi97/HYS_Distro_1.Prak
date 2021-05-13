@@ -134,9 +134,10 @@ class User():
         self.method = 'POST'
 
         self.help = '\n\n1. Actions\n' + \
-            '2. Close client\n' + \
-            '3. Close server\n' + \
             '4. Close all\n\n'
+            #'2. Close client\n' + \
+            #'3. Close server\n' + \
+            
         self.headers_ok = 'HTTP/1.1 200 OK\r\n' + \
             'Date: {time_now}\r\n' + \
             'Server: {host}\r\n' + \
@@ -352,10 +353,10 @@ class User():
             user_input = input(self.help)
             if user_input == '1':
                 self.actions()
-            elif user_input == '2':
-                self.close_all_clients()
-            elif user_input == '3':
-                self.close_server()
+          #  elif user_input == '2':
+          #      self.close_all_clients()
+          #  elif user_input == '3':
+           #     self.close_server()
             elif user_input == '4':
                 try:
                     self.close_server()
@@ -374,8 +375,8 @@ class User():
               '\t3. Ask blocks (/getblocks)\n' +
               '\t4. Get block data (/getdata)\n' +
               '\t5. Get users (/addr)\n' +
-              '\t6. Send message (/message)\n' +
-              '\t7. Broadcast users (/addips)\n' +
+              #'\t6. Send message (/message)\n' +
+             # '\t7. Broadcast users (/addips)\n' +
               '\t8. Add new block\n' +
               '\t9. Broadcast blocks (/addblocks)\n' +
               '\t0. Go back')
@@ -390,10 +391,10 @@ class User():
             self.get_block_data()
         elif user_input == '5':
             self.get_users()
-        elif user_input == '6':
-            self.messaging_selection()
-        elif user_input == '7':
-            self.broadcast_users()
+    #    elif user_input == '6':
+     #       self.messaging_selection()
+     #   elif user_input == '7':
+     #       self.broadcast_users()
         elif user_input == '8':
             data = self.clients[0].validate_msg()
             self.add_new_block(data)
