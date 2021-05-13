@@ -76,7 +76,6 @@ user1.ip:
 """
 
 
-
 import os
 import os.path
 import sys
@@ -90,12 +89,22 @@ from datetime import datetime
 from time import sleep
 
 sys.path.insert(1, os.pardir + os.sep + "ip_address")
-from client import Client
 from ip_address import IPHandler
+sys.path.insert(1, os.pardir + os.sep + "kaevandamine")
+from kaevama import kaeva_naivselt, sha256_str
+sys.path.insert(1, os.pardir + os.sep + "digital-signature")
+from digital_signature import DigitalSignature
+
+from client import Client
 from request_parsing import *
+from ip_address import IPHandler
 
 default_ip = '127.0.0.1'
 default_port = 5000
+
+MAX_ZEROS = 4
+MAX_MINE_S = 5 # sekundid
+DEFAULT_MINE = 1 # minutid
 
 
 class User():
@@ -183,6 +192,9 @@ class User():
 
         self.last_client_index += 1
 
+        self.last_mine = datetime.now()
+        self.mining = None
+
         self.write_json(True)
         self.start_user()
 
@@ -193,6 +205,9 @@ class User():
         """
         self.server = threading.Thread(target=self.start_server)
         self.server.start()
+
+        self.mining = threading.Thread(target=self.kaevandamine_thread)
+        self.mining.start()
 
         self.start_clients()
         threading.Thread(target=self.delayed_broadcasts).start()
@@ -508,15 +523,19 @@ class User():
             print('There is no block file or no block at all')
             return ''
 
-    def add_new_block(self, data):
-        h = hashlib.sha256()
-        h.update((self.get_last_block() + data).encode('utf-8'))
-        hash_block = h.hexdigest()
+    def add_new_block(self, data, bhash='', broadcast=True):
+        if bhash == '':
+            h = hashlib.sha256()
+            h.update((self.get_last_block() + data).encode('utf-8'))
+            hash_block = h.hexdigest()
+        else:
+            hash_block = bhash
         with open(self.blocks_path, 'a+') as bf:
             bf.write(hash_block + '\n')
         with open(self.path + hash_block + '.block', 'w+') as hb:
             hb.write(data)
-        self.broadcast_blocks()
+        if broadcast:
+            self.broadcast_blocks()
 
     def get_blocks_menu(self):
         print('\n\n\t\t1. From last block and ahead\n' +
@@ -668,7 +687,7 @@ class User():
                 threading.Thread(target=self.delayed_broadcasts).start()
         except:
             print(sys.exc_info()[0])
-        
+
     def add_blocks(self, blocks):
         my_blocks = self.my_blocks()
         try:
@@ -698,6 +717,39 @@ class User():
         except:
             traceback.print_exc()
             print('Some error happened while adding a transaction')
+
+    def kaevandamine(self, already=0):
+        MAX_TRY = 3
+        try:
+            if already+1 >= MAX_TRY:
+                return False
+            success = False
+            with open(self.transactions_path, 'r') as tr_f:
+                transactions = tr_f.read()
+                new_hash = kaeva_naivselt(
+                    transactions, self.get_last_block_hash(), n=MAX_ZEROS, t=MAX_MINE_S)
+                self.add_new_block(transactions, bhash=new_hash, broadcast=False)
+                tr_f.close()
+                success = True
+            if success:
+                with open(self.transactions_path, 'w') as tr_f:
+                    tr_f.write('[]')
+                    tr_f.close()
+        except:
+            traceback.print_exc()
+            print('Could not mine')
+            sleep(0.5)
+            self.kaevandamine(already=(already+1))
+
+    def kaevandamine_thread(self, t=DEFAULT_MINE):
+        sleep(60*t)
+        while self.is_open():
+            praegu = datetime.now()
+            if praegu != self.last_mine and (praegu.minute-self.last_mine.minute == t):
+                print('Mining')
+                self.kaevandamine()
+                self.last_mine = praegu
+                sleep(5)
 
 if __name__ == '__main__':
     server_port, name = int(argv[1]), argv[2]

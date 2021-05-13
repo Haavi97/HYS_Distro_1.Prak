@@ -9,7 +9,7 @@ def sha256_str(tekst):
     return sha256(tekst.encode('utf-8')).hexdigest()
 
 
-def kaeva_naivselt(transaktsioon, hash, n=4, t=5):
+def kaeva_naivselt(transaktsioon, last_hash, n=4, t=5):
     '''
     Parameetrid:
     hash : string
@@ -32,7 +32,7 @@ def kaeva_naivselt(transaktsioon, hash, n=4, t=5):
     nonce = -1
     while not praegune.startswith(prefiks_nullid) and nonce < MAX_NONCE:
         nonce += 1
-        praegune = sha256_str(transaktsioon + hash + str(nonce))
+        praegune = sha256_str(transaktsioon + last_hash + str(nonce))
         hetkel = time()
     try:
         # Praksi kirjelduses on mõni minimum aeg mis vähemalt peab kaevandama
@@ -45,7 +45,7 @@ def kaeva_naivselt(transaktsioon, hash, n=4, t=5):
     print('Tegelik kaevandamine aeg: {:.2f} s'.format(hetkel - algus))
     print('Nonce: {}'.format(nonce))
     print('Hash: {}'.format(praegune))
-    return hash
+    return praegune
 
 
 if __name__ == '__main__':
