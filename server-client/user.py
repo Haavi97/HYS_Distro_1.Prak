@@ -75,8 +75,6 @@ user1.ip:
 - [ ] Implement over the internet not only locally
 """
 
-
-
 import os
 import os.path
 import sys
@@ -87,6 +85,10 @@ import hashlib
 from sys import argv
 from datetime import datetime
 from time import sleep
+sys.path.insert(1, os.pardir + os.sep + "digital-signature")
+from digital_signature import DigitalSignature
+sys.path.insert(1, os.pardir + os.sep + "digital-signature")
+from transaction import TransAction
 
 sys.path.insert(1, os.pardir + os.sep + "ip_address")
 from client import Client
@@ -120,6 +122,10 @@ class User():
         self.host = host  # server ip address
         self.port = port  # server port
         self.name = name  # user name
+        self.digital_signature = DigitalSignature()
+        self.digital_signature.create_key(name)
+
+        self.transaction = TransAction()
 
         self.ip = str(self.host) + ':' + str(self.port)
 
@@ -378,6 +384,7 @@ class User():
               '\t7. Broadcast users (/addips)\n' +
               '\t8. Add new block\n' +
               '\t9. Broadcast blocks (/addblocks)\n' +
+              '\t10. Add transaction (/addtransaction)\n' +
               '\t0. Go back')
         user_input = input()
         if user_input == '1':
@@ -399,6 +406,8 @@ class User():
             self.add_new_block(data)
         elif user_input == '9':
             self.broadcast_blocks()
+        elif user_input == '10':
+            self.add_transaction()
         elif user_input == '0':
             self.menu()
         else:
@@ -588,6 +597,18 @@ class User():
         if active_clients != []:
             for client in active_clients:
                 client.send_message(to_send, path='/addblocks', method='POST')
+    
+    def add_transaction(self):
+        to = input('Send to: ')
+        sum = input('Sum to send: ')
+        to_send = self.transaction.create_transaction(self.name, to, int(sum))
+        to_send += '\n' + self.ip
+        active_clients = self.active_clients_list()
+        if active_clients != []:
+            for client in active_clients:
+                client.send_message(to_send, path='/transaction', method='POST')
+        
+    
 
     def parse_client_request(self, url,  data):
         if url == '/getblocks':
