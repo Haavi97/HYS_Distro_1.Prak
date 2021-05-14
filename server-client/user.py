@@ -762,6 +762,8 @@ class User():
                 with open(self.transactions_path, 'w') as tr_f:
                     tr_f.write('[]')
                     tr_f.close()
+        except AssertionError:
+            print('Cannot mine empty transactions list')
         except:
             traceback.print_exc()
             print('Could not mine')

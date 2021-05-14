@@ -11,7 +11,7 @@ class TransAction:
   def create_transaction(self, user_from, user_to, sum):
 
     public_from = self.digital_signature.get_public_key(user_from)
-    public_to = self.digital_signature.get_public_key(user_from)
+    public_to = self.digital_signature.get_public_key(user_to)
     transaction = {
       "from":  binascii.hexlify(self.digital_signature.key_to_string(public_from)).decode(),
       "to":  binascii.hexlify(self.digital_signature.key_to_string(public_to)).decode(),

@@ -48,7 +48,7 @@ class MerklePuu():
             if pikkus%2 == 1:
                 nimekiri.append(nimekiri[-1])
             uus_nimekiri = []
-            for i in range(len(nimekiri)/2):
+            for i in range(int(len(nimekiri)/2)):
                 praegune = MerklePuu(vasak=sha256_str(nimekiri[i]), parem=sha256_str(nimekiri[i+1]))
                 uus_nimekiri.append(praegune.arvuta_hash())
             return self.ehita_nimekirjast(uus_nimekiri, juba_hash=True)
