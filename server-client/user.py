@@ -94,6 +94,8 @@ sys.path.insert(1, os.pardir + os.sep + "kaevandamine")
 from kaevama import kaeva_naivselt, sha256_str
 sys.path.insert(1, os.pardir + os.sep + "digital-signature")
 from digital_signature import DigitalSignature
+sys.path.insert(1, os.pardir + os.sep + "merkle-puu")
+from merklepuu import MerklePuu
 
 from client import Client
 from request_parsing import *
@@ -725,10 +727,13 @@ class User():
                 return False
             success = False
             with open(self.transactions_path, 'r') as tr_f:
-                transactions = tr_f.read()
+                transactions = json.loads(tr_f.read())
+                merkle = MerklePuu()
+                bloki_merkle_hash = merkle.ehita_nimekirjast(transactions)
+                print(bloki_merkle_hash)
                 new_hash = kaeva_naivselt(
-                    transactions, self.get_last_block_hash(), n=MAX_ZEROS, t=MAX_MINE_S)
-                self.add_new_block(transactions, bhash=new_hash, broadcast=False)
+                    bloki_merkle_hash, self.get_last_block_hash(), n=MAX_ZEROS, t=MAX_MINE_S)
+                self.add_new_block(json.dumps(transactions), bhash=new_hash, broadcast=False)
                 tr_f.close()
                 success = True
             if success:
@@ -746,7 +751,7 @@ class User():
         while self.is_open():
             praegu = datetime.now()
             if praegu != self.last_mine and (praegu.minute-self.last_mine.minute == t):
-                print('Mining')
+                print('Kaevandamine')
                 self.kaevandamine()
                 self.last_mine = praegu
                 sleep(5)

@@ -2,7 +2,7 @@ import os
 import sys
 
 sys.path.insert(1, os.pardir + os.sep + "kaevandamine")
-from kaevandamine import sha256_str
+from kaevama import sha256_str
 
 
 class MerklePuu():
@@ -31,34 +31,27 @@ class MerklePuu():
 
     def arvuta_hash(self):
         self.hash = sha256_str(self.vasak + self.parem)
+        return self.hash
 
-    def ehita_nimekirjast(self, nimekiri):
+    def ehita_nimekirjast(self, nimekiri, juba_hash=False):
+        '''
+        Antud transaktsioonide nimekiri peab hashima
+        '''
         pikkus = len(nimekiri)
         assert pikkus > 0
-
+        
         if pikkus == 1:
-            self.hash = MerklePuu(hash=nimekiri[0])
-        elif pikkus == 2:
-            self.hash = MerklePuu(vasak=nimekiri[0], parem=nimekiri[1])
-        elif pikkus == 3:
-            self.vasak = MerklePuu(vasak=nimekiri[0], parem=nimekiri[1])
-            self.parem = MerklePuu(vasak=nimekiri[2], parem=nimekiri[2])
-            self.arvuta_hash()
-        elif pikkus == 4:
-            self.vasak = MerklePuu(vasak=nimekiri[0], parem=nimekiri[1])
-            self.parem = MerklePuu(vasak=nimekiri[2], parem=nimekiri[3])
-            self.arvuta_hash()
-        elif pikkus == 5:
-            self.vasak = MerklePuu()
-            self.parem = MerklePuu()
-            self.vasak.ehita_nimekirjast(nimekiri[:3])
-            self.parem.ehita_nimekirjast(nimekiri[4]*4)
-            self.arvuta_hash()
+            to_hash = nimekiri[0] if juba_hash else sha256_str(str(nimekiri[0]))
+            self.hash = to_hash
+            return self.hash
         else:
-            self.vasak = MerklePuu()
-            self.parem = MerklePuu()
-            self.vasak.ehita_nimekirjast(nimekiri[:3])
-            self.parem.ehita_nimekirjast(nimekiri[4]*4)
-            self.arvuta_hash()
+            if pikkus%2 == 1:
+                nimekiri.append(nimekiri[-1])
+            uus_nimekiri = []
+            for i in range(len(nimekiri)/2):
+                praegune = MerklePuu(vasak=sha256_str(nimekiri[i]), parem=sha256_str(nimekiri[i+1]))
+                uus_nimekiri.append(praegune.arvuta_hash())
+            return self.ehita_nimekirjast(uus_nimekiri, juba_hash=True)
+        
             
 
