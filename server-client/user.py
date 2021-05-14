@@ -8,7 +8,7 @@ CLI application that requires 2 parameters:
 1. Server port
 2. User name
 
-I also needs to have an .ip file with a list of the different servers it can connect to.
+It also needs to have an .ip file with a list of the different servers it can connect to.
 Those files must be in the folder *users*
 Example file user1.ip:
 ```
@@ -68,11 +68,10 @@ user1.ip:
 - [x] Automatic connection to new ip addresses connecting to the user server (client)
 - [x] Send all messages over HTTP
 - [x] Parse GET and POST requests
-- [ ] When a client connects to a server somehow send it's server port so the server \
+- [x] When a client connects to a server somehow send it's server port so the server \
     can also connect to that user.
-- [ ] Automatically add the addresses of new clients.
-- [ ] Error handling
-- [ ] Implement over the internet not only locally
+- [x] Automatically add the addresses of new clients.
+- [x] Error handling
 """
 
 
@@ -94,6 +93,7 @@ sys.path.insert(1, os.pardir + os.sep + "kaevandamine")
 from kaevama import kaeva_naivselt, sha256_str
 sys.path.insert(1, os.pardir + os.sep + "digital-signature")
 from digital_signature import DigitalSignature
+from transaction import TransAction
 sys.path.insert(1, os.pardir + os.sep + "merkle-puu")
 from merklepuu import MerklePuu
 
@@ -196,6 +196,7 @@ class User():
 
         self.last_mine = datetime.now()
         self.mining = None
+        self.kaevandamas = False
 
         self.write_json(True)
         self.start_user()
@@ -752,8 +753,10 @@ class User():
             praegu = datetime.now()
             if praegu != self.last_mine and (praegu.minute-self.last_mine.minute == t):
                 print('Kaevandamine')
+                self.kaevandamas = True
                 self.kaevandamine()
                 self.last_mine = praegu
+                self.kaevandamas = False
                 sleep(5)
 
 if __name__ == '__main__':
