@@ -97,7 +97,8 @@ from digital_signature import DigitalSignature
 from transaction import TransAction
 sys.path.insert(1, os.pardir + os.sep + "merkle-puu")
 from merklepuu import MerklePuu
-
+sys.path.insert(1, os.pardir + os.sep + "MainNode")
+from p2ring import p2ring
 
 from client import Client
 from request_parsing import *
@@ -134,10 +135,6 @@ class User():
         self.host = host  # server ip address
         self.port = port  # server port
         self.name = name  # user name
-        self.digital_signature = DigitalSignature()
-        self.digital_signature.create_key(name)
-
-        self.transaction = TransAction()
 
         self.ip = str(self.host) + ':' + str(self.port)
 
@@ -173,9 +170,16 @@ class User():
         # path with the json file for handling user data
         self.user_path = self.path + self.name + '.json'
         self.check_file_exists(self.user_path)
+
         # path with the ip addresses file the user tries to connect at the beginning
         self.ips_path = self.path + self.name + '.ip'
-        self.check_file_exists(self.ips_path)
+        
+        # Helper class for reading and writing to the ip addresses file
+        self.iphandler = IPHandler(file=self.ips_path)
+
+        if not self.check_file_exists(self.ips_path):
+            to_list = p2ring(self.host, self.port, self.iphandler)
+        
         # path with the blocks file the user tries to connect at the beginning
         self.blocks_path = self.path + self.name + '.blocks'
         self.check_file_exists(self.blocks_path)
@@ -188,8 +192,6 @@ class User():
         # socket for the server
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server = None   # Attribute that will contain the thread for the server
-        # Helper class for reading and writing to the ip addresses file
-        self.iphandler = IPHandler(file=self.ips_path)
         self.clients_list = self.iphandler.get_ip_listdef()
         self.clients = []
         self.last_client_index = 0
@@ -204,6 +206,11 @@ class User():
         self.last_mine = datetime.now()
         self.mining = None
         self.kaevandamas = False
+
+        self.digital_signature = DigitalSignature()
+        self.digital_signature.create_key(name)
+
+        self.transaction = TransAction()
 
         self.write_json(True)
         self.start_user()

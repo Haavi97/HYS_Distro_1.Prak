@@ -2,12 +2,10 @@ import asyncio
 import websockets
 import json
 
-
-async def hello():
+async def p2ring(ip_address, port, iphandler):
     MainNodeUri = "ws://localhost:1234"
     async with websockets.connect(MainNodeUri) as websocket:
-        #name = input("What's your name? ")
-        IPAddress="127.0.0.1:6500"
+        IPAddress=ip_address + ':' + port
         print("Sent IP aadress is {}".format(IPAddress))
         await websocket.send(IPAddress)
 
@@ -15,7 +13,4 @@ async def hello():
         IPList = json.loads(jsonString)
         print("recieved IP list is: ")
         print(IPList)
-
-        #print(f"< {IPList}")
-
-asyncio.get_event_loop().run_until_complete(hello())
+        iphandler.add_ip_list(IPList)

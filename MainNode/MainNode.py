@@ -3,7 +3,7 @@ import websockets
 import json
 
 nodeIPAadress = "localhost"
-nodePort = "5000"
+nodePort = "1234"
 
 
 
