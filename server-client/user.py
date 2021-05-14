@@ -94,6 +94,10 @@ sys.path.insert(1, os.pardir + os.sep + "kaevandamine")
 from kaevama import kaeva_naivselt, sha256_str
 sys.path.insert(1, os.pardir + os.sep + "digital-signature")
 from digital_signature import DigitalSignature
+from transaction import TransAction
+sys.path.insert(1, os.pardir + os.sep + "merkle-puu")
+from merklepuu import MerklePuu
+
 
 from client import Client
 from request_parsing import *
@@ -130,6 +134,10 @@ class User():
         self.host = host  # server ip address
         self.port = port  # server port
         self.name = name  # user name
+        self.digital_signature = DigitalSignature()
+        self.digital_signature.create_key(name)
+
+        self.transaction = TransAction()
 
         self.ip = str(self.host) + ':' + str(self.port)
 
@@ -194,6 +202,7 @@ class User():
 
         self.last_mine = datetime.now()
         self.mining = None
+        self.kaevandamas = False
 
         self.write_json(True)
         self.start_user()
@@ -400,6 +409,7 @@ class User():
               '\t7. Broadcast users (/addips)\n' +
               '\t8. Add new block\n' +
               '\t9. Broadcast blocks (/addblocks)\n' +
+              '\t10. Add transaction (/transaction)\n' +
               '\t0. Go back')
         user_input = input()
         if user_input == '1':
@@ -421,6 +431,8 @@ class User():
             self.add_new_block(data)
         elif user_input == '9':
             self.broadcast_blocks()
+        elif user_input == '10':
+            self.add_transaction()
         elif user_input == '0':
             self.menu()
         else:
@@ -688,6 +700,17 @@ class User():
         except:
             print(sys.exc_info()[0])
 
+    
+    def add_transaction(self):
+        to = input('Send to: ')
+        sum = input('Sum to send: ')
+        to_send = self.transaction.create_transaction(self.name, to, int(sum))
+        active_clients = self.active_clients_list()
+        if active_clients != []:
+            for client in active_clients:
+                client.send_message(to_send, path='/transaction', method='POST')
+        self.add_new_transaction(to_send)
+    
     def add_blocks(self, blocks):
         my_blocks = self.my_blocks()
         try:
@@ -725,10 +748,13 @@ class User():
                 return False
             success = False
             with open(self.transactions_path, 'r') as tr_f:
-                transactions = tr_f.read()
+                transactions = json.loads(tr_f.read())
+                merkle = MerklePuu()
+                bloki_merkle_hash = merkle.ehita_nimekirjast(transactions)
+                print(bloki_merkle_hash)
                 new_hash = kaeva_naivselt(
-                    transactions, self.get_last_block_hash(), n=MAX_ZEROS, t=MAX_MINE_S)
-                self.add_new_block(transactions, bhash=new_hash, broadcast=False)
+                    bloki_merkle_hash, self.get_last_block_hash(), n=MAX_ZEROS, t=MAX_MINE_S)
+                self.add_new_block(json.dumps(transactions), bhash=new_hash, broadcast=False)
                 tr_f.close()
                 success = True
             if success:
@@ -746,9 +772,11 @@ class User():
         while self.is_open():
             praegu = datetime.now()
             if praegu != self.last_mine and (praegu.minute-self.last_mine.minute == t):
-                print('Mining')
+                print('Kaevandamine')
+                self.kaevandamas = True
                 self.kaevandamine()
                 self.last_mine = praegu
+                self.kaevandamas = False
                 sleep(5)
 
 if __name__ == '__main__':
