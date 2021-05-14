@@ -8,7 +8,7 @@ CLI application that requires 2 parameters:
 1. Server port
 2. User name
 
-It also needs to have an .ip file with a list of the different servers it can connect to.
+I also needs to have an .ip file with a list of the different servers it can connect to.
 Those files must be in the folder *users*
 Example file user1.ip:
 ```
@@ -68,10 +68,11 @@ user1.ip:
 - [x] Automatic connection to new ip addresses connecting to the user server (client)
 - [x] Send all messages over HTTP
 - [x] Parse GET and POST requests
-- [x] When a client connects to a server somehow send it's server port so the server \
+- [ ] When a client connects to a server somehow send it's server port so the server \
     can also connect to that user.
-- [x] Automatically add the addresses of new clients.
-- [x] Error handling
+- [ ] Automatically add the addresses of new clients.
+- [ ] Error handling
+- [ ] Implement over the internet not only locally
 """
 
 
@@ -93,9 +94,6 @@ sys.path.insert(1, os.pardir + os.sep + "kaevandamine")
 from kaevama import kaeva_naivselt, sha256_str
 sys.path.insert(1, os.pardir + os.sep + "digital-signature")
 from digital_signature import DigitalSignature
-from transaction import TransAction
-sys.path.insert(1, os.pardir + os.sep + "merkle-puu")
-from merklepuu import MerklePuu
 
 from client import Client
 from request_parsing import *
@@ -196,7 +194,6 @@ class User():
 
         self.last_mine = datetime.now()
         self.mining = None
-        self.kaevandamas = False
 
         self.write_json(True)
         self.start_user()
@@ -728,13 +725,10 @@ class User():
                 return False
             success = False
             with open(self.transactions_path, 'r') as tr_f:
-                transactions = json.loads(tr_f.read())
-                merkle = MerklePuu()
-                bloki_merkle_hash = merkle.ehita_nimekirjast(transactions)
-                print(bloki_merkle_hash)
+                transactions = tr_f.read()
                 new_hash = kaeva_naivselt(
-                    bloki_merkle_hash, self.get_last_block_hash(), n=MAX_ZEROS, t=MAX_MINE_S)
-                self.add_new_block(json.dumps(transactions), bhash=new_hash, broadcast=False)
+                    transactions, self.get_last_block_hash(), n=MAX_ZEROS, t=MAX_MINE_S)
+                self.add_new_block(transactions, bhash=new_hash, broadcast=False)
                 tr_f.close()
                 success = True
             if success:
@@ -752,11 +746,9 @@ class User():
         while self.is_open():
             praegu = datetime.now()
             if praegu != self.last_mine and (praegu.minute-self.last_mine.minute == t):
-                print('Kaevandamine')
-                self.kaevandamas = True
+                print('Mining')
                 self.kaevandamine()
                 self.last_mine = praegu
-                self.kaevandamas = False
                 sleep(5)
 
 if __name__ == '__main__':
