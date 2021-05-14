@@ -22,16 +22,18 @@ class Ini:
     self.create_terminals(ports)
   
   def create_terminals(self, ports):
-    for port in  range(len(ports)):
-      command = 'python user.py ' + str(ports[port]) +  ' user' + str(port + 1)
-      os.system("start cmd /k " + command)
-      sleep(1)
+    
     path_parent = os. path. dirname(os. getcwd())
     os.chdir(path_parent+ os.sep + 'MainNode' + os.sep)
     command = 'python MainNode.py'
     print(command)
     os.system("start cmd /k " + command)
-    sleep(1)
+    os.chdir(self.path)
+    sleep(3)
+    for port in  range(len(ports)):
+      command = 'python user.py ' + str(ports[port]) +  ' user' + str(port + 1)
+      os.system("start cmd /k " + command)
+      sleep(1)
 
 if __name__ == '__main__':
   ini = Ini()

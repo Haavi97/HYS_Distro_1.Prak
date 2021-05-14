@@ -68,6 +68,7 @@ python MainNode.py
 - [x] Saab küsida uute klientide aadresseid
 - [x] Errorite käsitlemine
 - [x] Transaktsioone sisestamine
+- [x] Transaktsiooni digiallkirjastamine
 - [x] Transaktsioone laiali saatmine
 - [x] Merkle puu ehitamine transaktsioonide baasil
 - [x] Blokki kaevandamine
@@ -108,8 +109,9 @@ Selle päringu sisu on misiganes sõnum tahab saada antud sõlmele
 
 Selle päringu sisu peab olema transaktsiooni sisu kindlas JSON formaadis.
 Nt:
-
-
+```json
+{"signature": "44e3061f0f0f0ad60dfc11338a6a963371632204a7c8d70f71129a892ffabedebe6d16878d6a8ee1e0b25f9916d370ba", "transaction": {"from": "6578a7bc141ff94b17a632cba957d0f4c5290006c58491c66f0637e634d5d274ca269a8b4644d28b09cad9c852649927", "to": "686b075b3c4448a101ca474c13ccdaaf2103ff6b3c138a637312d119f1f554ecf3078b82cfa37693ba6a58cbbfbf0039", "sum": 12341, "timestamp": "2021-05-14T12:44:09.122898"}}
+```
 
 ## Autorid: 
 ### Fred Oja, Javier Ortín, Artur Kerb

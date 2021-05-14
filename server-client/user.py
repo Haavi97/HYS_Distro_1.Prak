@@ -84,6 +84,7 @@ import threading
 import json
 import hashlib
 import traceback
+import asyncio
 from sys import argv
 from datetime import datetime
 from time import sleep
@@ -175,10 +176,10 @@ class User():
         self.ips_path = self.path + self.name + '.ip'
         
         # Helper class for reading and writing to the ip addresses file
+        self.check_file_exists(self.ips_path)
         self.iphandler = IPHandler(file=self.ips_path)
-
-        if not self.check_file_exists(self.ips_path):
-            to_list = p2ring(self.host, self.port, self.iphandler)
+        print('Adding ips from Main Node')
+        asyncio.get_event_loop().run_until_complete(p2ring(self.host, self.port, self.iphandler))
         
         # path with the blocks file the user tries to connect at the beginning
         self.blocks_path = self.path + self.name + '.blocks'

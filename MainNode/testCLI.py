@@ -13,8 +13,10 @@ async def hello():
 
         jsonString = await websocket.recv()
         IPList = json.loads(jsonString)
+        iplist = list(map(lambda x: str(x), IPList))
         print("recieved IP list is: ")
-        print(IPList)
+        print(iplist)
+        print(type(iplist[0]))
 
         #print(f"< {IPList}")
 
