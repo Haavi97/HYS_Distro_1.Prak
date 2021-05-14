@@ -1,0 +1,2 @@
+def MiningResults():
+    return "mined"
