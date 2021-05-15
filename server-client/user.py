@@ -1,7 +1,7 @@
 """User script.
 
->Module that implements a simple server-client that can accept
-several clients and connect to several clients
+>Module that implements a simple server-client user of a blockchain where different 
+transactions are sent and added to blocks that are later mined...
 
 # Usage
 CLI application that requires 2 parameters:
@@ -9,7 +9,7 @@ CLI application that requires 2 parameters:
 2. User name
 
 I also needs to have an .ip file with a list of the different servers it can connect to.
-Those files must be in the folder *users*
+Those files must be in the folder *users*.
 Example file user1.ip:
 ```
 127.0.0.1:6000
@@ -62,17 +62,6 @@ user1.ip:
 
 ```
 
-# Plan
-- [x] Server client user with multiple connections
-- [x] Connection to several ip addresses (client)
-- [x] Automatic connection to new ip addresses connecting to the user server (client)
-- [x] Send all messages over HTTP
-- [x] Parse GET and POST requests
-- [ ] When a client connects to a server somehow send it's server port so the server \
-    can also connect to that user.
-- [ ] Automatically add the addresses of new clients.
-- [ ] Error handling
-- [ ] Implement over the internet not only locally
 """
 
 
@@ -580,11 +569,14 @@ class User():
             if last_block != '':
                 url += '/' + last_block
         total_blocks = ''
+        all_last = []
         for client in self.active_clients_list():
             data = client.send_message('', path=url, method='GET')
             self.add_blocks(data.text)
             total_blocks += data.text
+            all_last.append((data.text).split('\n')[-1])
         print('All blocks received:\n{}'.format(total_blocks))
+        return all_last
 
     def get_block_data(self):
         print('Select block to get data:')
@@ -708,7 +700,6 @@ class User():
                 threading.Thread(target=self.delayed_broadcasts).start()
         except:
             print(sys.exc_info()[0])
-
     
     def add_transaction(self):
         to = input('Send to: ')
@@ -789,6 +780,16 @@ class User():
                 self.last_mine = praegu
                 self.kaevandamas = False
                 sleep(5)
+                self.checkmining()
+    
+    def checkmining(self):
+        last_mined_hashes = self.get_blocks()
+        counters = list(map(lambda x: last_mined_hashes.count(x), last_mined_hashes))
+        most_repeated_hash = last_mined_hashes[counters.index(max(counters))]
+        if self.get_last_block_hash() != most_repeated_hash:
+            print('Syncronazing my last block hash. Found missmatch')
+            print('My last hash: {}'.format(self.get_last_block_hash()))
+            print('Majority last hash: {}'.format(most_repeated_hash))
 
 if __name__ == '__main__':
     server_port, name = int(argv[1]), argv[2]
