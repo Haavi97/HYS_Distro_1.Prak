@@ -574,7 +574,7 @@ class User():
             data = client.send_message('', path=url, method='GET')
             self.add_blocks(data.text)
             total_blocks += data.text
-            all_last.append((data.text).split('\n')[-1])
+            all_last.append(list(filter(lambda x: x != '' and x != None, (data.text).split('\n')))[-1])
         print('All blocks received:\n{}'.format(total_blocks))
         return all_last
 
@@ -704,12 +704,15 @@ class User():
     def add_transaction(self):
         to = input('Send to: ')
         sum = input('Sum to send: ')
-        to_send = self.transaction.create_transaction(self.name, to, int(sum))
-        active_clients = self.active_clients_list()
-        if active_clients != []:
-            for client in active_clients:
-                client.send_message(to_send, path='/transaction', method='POST')
-        self.add_new_transaction(to_send)
+        try:
+            to_send = self.transaction.create_transaction(self.name, to, float(sum))
+            active_clients = self.active_clients_list()
+            if active_clients != []:
+                for client in active_clients:
+                    client.send_message(to_send, path='/transaction', method='POST')
+            self.add_new_transaction(to_send)
+        except:
+            print('Incorrect transaction inputs')
     
     def add_blocks(self, blocks):
         my_blocks = self.my_blocks()
