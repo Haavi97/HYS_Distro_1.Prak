@@ -7,7 +7,6 @@ class DigitalSignature:
     self.userpath = '..' + os.sep + 'server-client' + os.sep + 'users'
 
   def create_key(self, name):
-    print(self.userpath + os.sep + name + os.sep + "sk.pem")
     sk = SigningKey.generate()
     vk = sk.verifying_key
     with open(self.userpath + os.sep + name + os.sep + "sk.pem", "wb") as f:

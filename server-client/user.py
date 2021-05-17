@@ -562,7 +562,7 @@ class User():
             print("Please, select a valid option")
             self.get_blocks_menu()
 
-    def get_blocks(self, from_last=False):
+    def get_blocks(self, from_last=False, no_update=False):
         url = '/getblocks'
         if from_last:
             last_block = self.get_last_block_hash()
@@ -572,7 +572,8 @@ class User():
         all_last = []
         for client in self.active_clients_list():
             data = client.send_message('', path=url, method='GET')
-            self.add_blocks(data.text)
+            if not no_update:
+                self.add_blocks(data.text)
             total_blocks += data.text
             all_last.append(list(filter(lambda x: x != '' and x != None, (data.text).split('\n')))[-1])
         print('All blocks received:\n{}'.format(total_blocks))
@@ -786,13 +787,19 @@ class User():
                 self.checkmining()
     
     def checkmining(self):
-        last_mined_hashes = self.get_blocks()
+        last_mined_hashes = self.get_blocks(no_update=True)
         counters = list(map(lambda x: last_mined_hashes.count(x), last_mined_hashes))
         most_repeated_hash = last_mined_hashes[counters.index(max(counters))]
         if self.get_last_block_hash() != most_repeated_hash:
             print('Syncronazing my last block hash. Found missmatch')
             print('My last hash: {}'.format(self.get_last_block_hash()))
             print('Majority last hash: {}'.format(most_repeated_hash))
+            with open(self.blocks_path, 'r') as bf:
+                my_blocks = bf.read().split('\n')
+                bf.close()
+            with open(self.blocks_path, 'w+') as bf:
+                bf.write('\n'.join(my_blocks[:-1]))
+
 
 if __name__ == '__main__':
     server_port, name = int(argv[1]), argv[2]
