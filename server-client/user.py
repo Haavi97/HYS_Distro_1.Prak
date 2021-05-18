@@ -778,7 +778,7 @@ class User():
         while self.is_open():
             praegu = datetime.now()
             if praegu != self.last_mine and (praegu.minute-self.last_mine.minute == t):
-                print('Kaevandamine')
+                print('Mining')
                 self.kaevandamas = True
                 self.kaevandamine()
                 self.last_mine = praegu
@@ -791,14 +791,21 @@ class User():
         counters = list(map(lambda x: last_mined_hashes.count(x), last_mined_hashes))
         most_repeated_hash = last_mined_hashes[counters.index(max(counters))]
         if self.get_last_block_hash() != most_repeated_hash:
-            print('Syncronazing my last block hash. Found missmatch')
-            print('My last hash: {}'.format(self.get_last_block_hash()))
-            print('Majority last hash: {}'.format(most_repeated_hash))
-            with open(self.blocks_path, 'r') as bf:
-                my_blocks = bf.read().split('\n')
-                bf.close()
-            with open(self.blocks_path, 'w+') as bf:
-                bf.write('\n'.join(my_blocks[:-1]))
+            try:
+                print('Syncronazing my last block hash. Found missmatch')
+                print('My last hash: {}'.format(self.get_last_block_hash()))
+                print('Majority last hash: {}'.format(most_repeated_hash))
+                with open(self.blocks_path, 'r') as bf:
+                    my_blocks = bf.read().split('\n')
+                    bf.close()
+                with open(self.blocks_path, 'w+') as bf:
+                    try:
+                        for block in my_blocks[:-2]:
+                            bf.write(block + '\n')
+                    except:
+                        bf.write('')
+            except:
+                print('Fatal error checking mining:\n{}'.format(sys.exc_info()[0]))
 
 
 if __name__ == '__main__':
