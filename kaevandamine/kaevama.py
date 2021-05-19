@@ -6,7 +6,7 @@ def sha256_str(tekst):
     '''Muudab hashi hex digest'iks nii, et saaks seda lugeda. 
 
     Ja kasutada tekstina järgmise hashimiseks.'''
-    return sha256(tekst.encode('utf-8')).hexdigest()
+    return sha256(str(tekst).encode('utf-8')).hexdigest()
 
 
 def kaeva_naivselt(transaktsioon, last_hash, n=4, t=5):

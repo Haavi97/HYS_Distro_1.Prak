@@ -774,7 +774,6 @@ class User():
             self.kaevandamine(already=(already+1))
 
     def kaevandamine_thread(self, t=DEFAULT_MINE):
-        sleep(60*t)
         while self.is_open():
             praegu = datetime.now()
             if praegu != self.last_mine and (praegu.minute-self.last_mine.minute == t):
@@ -788,6 +787,7 @@ class User():
     
     def checkmining(self):
         last_mined_hashes = self.get_blocks(no_update=True)
+        last_mined_hashes.append(self.get_last_block_hash())
         counters = list(map(lambda x: last_mined_hashes.count(x), last_mined_hashes))
         most_repeated_hash = last_mined_hashes[counters.index(max(counters))]
         if self.get_last_block_hash() != most_repeated_hash:
@@ -796,12 +796,14 @@ class User():
                 print('My last hash: {}'.format(self.get_last_block_hash()))
                 print('Majority last hash: {}'.format(most_repeated_hash))
                 with open(self.blocks_path, 'r') as bf:
-                    my_blocks = bf.read().split('\n')
+                    my_blocks = list(filter(lambda x: x != '' and x != None, bf.read().split('\n')))
                     bf.close()
                 with open(self.blocks_path, 'w+') as bf:
                     try:
-                        for block in my_blocks[:-2]:
+                        for block in my_blocks[:-1]:
                             bf.write(block + '\n')
+                        bf.write(most_repeated_hash + '\n')
+                        bf.close()
                     except:
                         bf.write('')
             except:
